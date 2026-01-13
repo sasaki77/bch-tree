@@ -2,8 +2,8 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
 
 
-class BeechTree(ConanFile):
-    name = "beech-tree"
+class Bchtree(ConanFile):
+    name = "bch-tree"
     version = "0.1.0"
     settings = "os", "compiler", "build_type", "arch"
     requires = (

@@ -5,7 +5,7 @@
 #include <behaviortree_cpp/bt_factory.h>
 #include "logger.h"
 
-namespace beechtree
+namespace bchtree
 {
     class BTRunner
     {

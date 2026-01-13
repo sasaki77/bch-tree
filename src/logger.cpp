@@ -4,7 +4,7 @@
 
 #include "logger.h"
 
-namespace beechtree
+namespace bchtree
 {
     void Logger::setLevel(const std::string &level)
     {

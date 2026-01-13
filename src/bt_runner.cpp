@@ -18,7 +18,7 @@ namespace
     }
 }
 
-namespace beechtree
+namespace bchtree
 {
 
     int BTRunner::run(const std::string &treePath)

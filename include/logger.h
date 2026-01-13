@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace beechtree
+namespace bchtree
 {
     class Logger
     {

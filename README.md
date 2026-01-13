@@ -1,4 +1,4 @@
-# beech-tree
+# bch-tree
 ## Install Conan
 
 ```bash

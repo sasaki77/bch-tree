@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv)
 {
-  cxxopts::Options options("beech-tree-cli", "beech-tree CLI Runner");
+  cxxopts::Options options("bch-tree-cli", "bch-tree CLI Runner");
 
   // clang-format off
   options.add_options()
@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     return 2;
   }
 
-  beechtree::Logger logger;
+  bchtree::Logger logger;
   logger.setLevel(result["log-level"].as<std::string>());
   auto logfile = result["log-file"].as<std::string>();
   if (!logfile.empty())
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     logger.setFile(logfile);
   }
 
-  beechtree::BTRunner runner;
+  bchtree::BTRunner runner;
   runner.setLogger(&logger);
 
   const std::string treePath = result["tree"].as<std::string>();
