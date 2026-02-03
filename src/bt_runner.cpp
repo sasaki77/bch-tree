@@ -34,6 +34,7 @@ int BTRunner::run(const std::string& treePath) {
     factory.registerNodeType<CAGetNode<int>>("CAGetInt", ctx, pv_manager);
     factory.registerNodeType<CAGetNode<std::string>>("CAGetString", ctx,
                                                      pv_manager);
+    factory.registerNodeType<PrintNode>("Print");
 
     BT::Tree tree = factory.createTreeFromFile(treePath, blackboard_);
     tree_ = std::make_unique<BT::Tree>(std::move(tree));
