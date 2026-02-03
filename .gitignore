@@ -32,7 +32,6 @@ CMakeFiles/
 cmake-build-*/
 *.cmake
 CMakeUserPresets.json
-CMakePresets.json
 
 # Ninja / Make
 *.ninja
