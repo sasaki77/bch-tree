@@ -1,22 +1,20 @@
 # bch-tree
-## Install Conan
+## Install vcpkg
 
 ```bash
-python -m venv env
-source ./env/bin/activate
-pip install conan
-conan profile detect
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg && ./bootstrap-vcpkg.sh
+export VCPKG_ROOT=/path/to/vcpkg
+export PATH=$VCPKG_ROOT:$PATH
 ```
 
 ## Build
 
 ```bash
-# 1) Fetch dependencies
-conan install . -s build_type=Release --build=missing
+export EPICS_BASE=/path/to/EPICS_BASE
+cmake --preset release
+cmake --build --preset release
 
-# 2) Generate CMake
-cmake --preset conan-release
-
-# 3) build
-cmake --build --preset conan-release
+# Clean
+cmake --build --preset release --target clean
 ```
