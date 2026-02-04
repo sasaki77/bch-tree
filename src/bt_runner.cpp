@@ -3,6 +3,7 @@
 #include <behaviortree_cpp/xml_parsing.h>
 
 #include "actions/caget_node.h"
+#include "actions/caput_node.h"
 #include "actions/print_node.h"
 
 namespace {
@@ -33,6 +34,11 @@ int BTRunner::run(const std::string& treePath) {
     factory.registerNodeType<CAGetNode<double>>("CAGetDouble", ctx, pv_manager);
     factory.registerNodeType<CAGetNode<int>>("CAGetInt", ctx, pv_manager);
     factory.registerNodeType<CAGetNode<std::string>>("CAGetString", ctx,
+                                                     pv_manager);
+
+    factory.registerNodeType<CAPutNode<double>>("CAPutDouble", ctx, pv_manager);
+    factory.registerNodeType<CAPutNode<int>>("CAPutInt", ctx, pv_manager);
+    factory.registerNodeType<CAPutNode<std::string>>("CAPutString", ctx,
                                                      pv_manager);
     factory.registerNodeType<PrintNode>("Print");
 

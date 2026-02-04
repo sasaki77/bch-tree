@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstring>
 #include <functional>
 #include <iostream>
 
@@ -9,6 +10,7 @@
 namespace bchtree::epics::ca {
 
 using GetCallback = std::function<void(PVData)>;
+using PutCallback = std::function<void(bool)>;
 using ConnCallback = std::function<void(bool)>;
 class CAPV;
 
@@ -53,11 +55,14 @@ class CAPV {
         return true;
     }
 
+    bool PutCB(const PVScalarValue& v, PutCallback cb);
+
     std::string GetPVname() const;
     bool IsConnected() const;
 
    private:
     static void ConnHandler(struct connection_handler_args args);
+    static void PutHandler(struct event_handler_args args);
 
     template <typename T>
     static void GetHandlerAs(struct event_handler_args args) {
