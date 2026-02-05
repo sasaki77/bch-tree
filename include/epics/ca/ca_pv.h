@@ -32,6 +32,17 @@ class CAPV {
     void Connect();
 
     template <typename T>
+    T GetAs() {
+        if constexpr (std::is_same_v<T, PVData>) {
+            // Don't need convert
+            return pvdata_;
+        } else {
+            // Convert to sample data
+            return extract_as<T>(pvdata_);
+        }
+    }
+
+    template <typename T>
     bool GetCBAs(GetCallbackAs<T> cb, const std::chrono::milliseconds timeout) {
         auto cb_ctx = std::make_unique<GetCBCtxAs<T>>();
         cb_ctx->self = this;
@@ -63,6 +74,10 @@ class CAPV {
    private:
     static void ConnHandler(struct connection_handler_args args);
     static void PutHandler(struct event_handler_args args);
+    static void MonitorHandler(struct event_handler_args args);
+
+    void EnsureStartMonitor(void);
+    void ClearMonitor(void);
 
     template <typename T>
     static void GetHandlerAs(struct event_handler_args args) {
@@ -130,8 +145,10 @@ class CAPV {
     static chtype PreferredGetType(chtype dbf);
 
     std::string pv_name_;
-    chid chid_ = nullptr;
+    chid chid_{nullptr};
+    evid evid_{nullptr};
     bool connected_{false};
+    PVData pvdata_;
 
     mutable std::mutex mtx_;
     std::shared_ptr<CAContextManager> ctx_;

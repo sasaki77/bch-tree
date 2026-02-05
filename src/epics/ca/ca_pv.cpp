@@ -96,6 +96,9 @@ void CAPV::ConnHandler(struct connection_handler_args args) {
     for (auto& cb : cbs) {
         if (cb) cb(self->connected_);
     }
+
+    // Alway start monitor for now
+    self->EnsureStartMonitor();
 }
 
 void CAPV::PutHandler(struct event_handler_args args) {
@@ -107,6 +110,42 @@ void CAPV::PutHandler(struct event_handler_args args) {
     }
 
     cb_ctx->cb(true);
+}
+
+void CAPV::MonitorHandler(struct event_handler_args args) {
+    auto* self = static_cast<CAPV*>(args.usr);
+    if (!self) return;
+
+    if (args.status != ECA_NORMAL) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(self->mtx_);
+    self->pvdata_ = DecodePVScalar(args.type, args.dbr);
+}
+
+void CAPV::EnsureStartMonitor() {
+    if (!connected_ or !chid_) return;  // Not connected
+    if (evid_) return;                  // Alread started
+
+    const short dbf = ca_field_type(chid_);
+    const chtype dbr_type = PreferredGetType(native_type_);
+
+    // Only scalar value is supported now
+    const unsigned long cnt = 1;
+
+    int st = ca_create_subscription(dbr_type, cnt, chid_, DBE_VALUE | DBE_ALARM,
+                                    &CAPV::MonitorHandler, this, &evid_);
+    if (st != ECA_NORMAL) {
+        std::cout << "status=" << st << " : " << ca_message(st) << "\n";
+    }
+}
+
+void CAPV::ClearMonitor() {
+    if (!evid_) return;  // Not started
+
+    ca_clear_subscription(evid_);
+    evid_ = nullptr;
 }
 
 PVData CAPV::DecodePVScalar(chtype type, const void* dbr) {
