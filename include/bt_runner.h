@@ -37,7 +37,7 @@ class BTRunner {
                       std::shared_ptr<epics::ca::PVManager> pv_manager)
         : ctx_(std::move(ctx)), pv_manager_(std::move(pv_manager)) {}
 
-    int Run();
+    bool Run();
     void PrintTree();
     void SetLogger(std::shared_ptr<Logger> logger);
     void UseRunnerLogger();

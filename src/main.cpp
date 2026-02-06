@@ -49,7 +49,10 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    int exit_code = runner.Run();
+    bool success = runner.Run();
+    if (success) {
+        return 0;
+    }
 
-    return exit_code;
+    return 1;
 }

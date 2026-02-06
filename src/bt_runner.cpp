@@ -7,19 +7,6 @@
 #include "actions/caput_node.h"
 #include "actions/print_node.h"
 
-namespace {
-int map_status_to_exit_code(BT::NodeStatus status) {
-    switch (status) {
-        case BT::NodeStatus::SUCCESS:
-            return 0;
-        case BT::NodeStatus::FAILURE:
-            return 1;
-        default:
-            return 2;
-    }
-}
-}  // namespace
-
 namespace bchtree {
 
 void BTRunner::PrintTree() {
@@ -30,9 +17,12 @@ void BTRunner::PrintTree() {
     BT::printTreeRecursively(tree_.rootNode());
 }
 
-int BTRunner::Run() {
+bool BTRunner::Run() {
     if (!initialized_) {
-        throw BT::RuntimeError("BTRunner: Runner is not initialized");
+        if (logger_) {
+            logger_->info("BTRunner: Runner is not initialized");
+        }
+        return false;
     }
 
     if (logger_) {
@@ -49,7 +39,7 @@ int BTRunner::Run() {
         logger_->info(std::string("End Tree: status=") + toStr(status));
     }
 
-    return map_status_to_exit_code(status);
+    return status == BT::NodeStatus::SUCCESS;
 }
 
 void BTRunner::SetLogger(std::shared_ptr<Logger> logger) { logger_ = logger; }
