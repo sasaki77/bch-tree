@@ -1,5 +1,6 @@
 #include "bt_runner.h"
 
+#include <behaviortree_cpp/loggers/bt_cout_logger.h>
 #include <behaviortree_cpp/xml_parsing.h>
 
 #include "actions/caget_node.h"
@@ -21,35 +22,28 @@ int map_status_to_exit_code(BT::NodeStatus status) {
 
 namespace bchtree {
 
-int BTRunner::run(const std::string& treePath) {
-    BT::BehaviorTreeFactory factory;
-    blackboard_ = BT::Blackboard::create();
-
-    auto ctx = std::make_shared<epics::ca::CAContextManager>();
-    ctx->Init();
-
-    auto pv_manager = std::make_shared<epics::ca::PVManager>(ctx);
-    factory.registerNodeType<CAGetNode<epics::PVData>>("CAGet", ctx,
-                                                       pv_manager);
-    factory.registerNodeType<CAGetNode<double>>("CAGetDouble", ctx, pv_manager);
-    factory.registerNodeType<CAGetNode<int>>("CAGetInt", ctx, pv_manager);
-    factory.registerNodeType<CAGetNode<std::string>>("CAGetString", ctx,
-                                                     pv_manager);
-
-    factory.registerNodeType<CAPutNode<double>>("CAPutDouble", ctx, pv_manager);
-    factory.registerNodeType<CAPutNode<int>>("CAPutInt", ctx, pv_manager);
-    factory.registerNodeType<CAPutNode<std::string>>("CAPutString", ctx,
-                                                     pv_manager);
-    factory.registerNodeType<PrintNode>("Print");
-
-    BT::Tree tree = factory.createTreeFromFile(treePath, blackboard_);
-    tree_ = std::make_unique<BT::Tree>(std::move(tree));
-
-    if (logger_) {
-        logger_->info("Start Tree: " + treePath);
+void BTRunner::PrintTree() {
+    if (!initialized_) {
+        throw BT::RuntimeError("BTRunner: Runner is not initialized");
     }
 
-    const BT::NodeStatus status = tree_->tickWhileRunning();
+    BT::printTreeRecursively(tree_.rootNode());
+}
+
+int BTRunner::Run() {
+    if (!initialized_) {
+        throw BT::RuntimeError("BTRunner: Runner is not initialized");
+    }
+
+    if (logger_) {
+        logger_->info("Start Tree:");
+    }
+
+    if (use_runner_logger_) {
+        runner_logger_ = std::make_unique<RunnerLogger>(tree_, logger_);
+    }
+
+    const BT::NodeStatus status = tree_.tickWhileRunning();
 
     if (logger_) {
         logger_->info(std::string("End Tree: status=") + toStr(status));
@@ -58,5 +52,58 @@ int BTRunner::run(const std::string& treePath) {
     return map_status_to_exit_code(status);
 }
 
-void BTRunner::setLogger(Logger* logger) { logger_ = logger; }
+void BTRunner::SetLogger(std::shared_ptr<Logger> logger) { logger_ = logger; }
+void BTRunner::UseRunnerLogger() { use_runner_logger_ = true; }
+
+void BTRunner::RegisterTreeFromFile(const std::string& treePath) {
+    blackboard_ = BT::Blackboard::create();
+
+    factory_.registerNodeType<CAGetNode<epics::PVData>>("CAGet", ctx_,
+                                                        pv_manager_);
+    factory_.registerNodeType<CAGetNode<double>>("CAGetDouble", ctx_,
+                                                 pv_manager_);
+    factory_.registerNodeType<CAGetNode<int>>("CAGetInt", ctx_, pv_manager_);
+    factory_.registerNodeType<CAGetNode<std::string>>("CAGetString", ctx_,
+                                                      pv_manager_);
+
+    factory_.registerNodeType<CAPutNode<double>>("CAPutDouble", ctx_,
+                                                 pv_manager_);
+    factory_.registerNodeType<CAPutNode<int>>("CAPutInt", ctx_, pv_manager_);
+    factory_.registerNodeType<CAPutNode<std::string>>("CAPutString", ctx_,
+                                                      pv_manager_);
+    factory_.registerNodeType<PrintNode>("Print");
+
+    factory_.registerBehaviorTreeFromFile(treePath);
+    tree_ = factory_.createTree("MainTree", blackboard_);
+
+    initialized_ = true;
+}
+
+RunnerLogger::RunnerLogger(const BT::Tree& tree, std::shared_ptr<Logger> logger)
+    : StatusChangeLogger(tree.rootNode()), logger_(std::move(logger)) {}
+RunnerLogger::~RunnerLogger() = default;
+
+void RunnerLogger::callback(BT::Duration timestamp, const BT::TreeNode& node,
+                            BT::NodeStatus prev_status, BT::NodeStatus status) {
+    // https://github.com/BehaviorTree/BehaviorTree.CPP/blob/master/src/loggers/bt_cout_logger.cpp
+    using namespace std::chrono;
+
+    constexpr const char* whitespaces = "                         ";
+    constexpr size_t ws_count = 25;
+
+    const double since_epoch = duration<double>(timestamp).count();
+
+    const std::string& name = node.name();
+    const char* padding = &whitespaces[std::min(ws_count, name.size())];
+
+    const std::string prev_str = BT::toStr(prev_status, /*colored=*/true);
+    const std::string curr_str = BT::toStr(status, /*colored=*/true);
+
+    char buffer[256];
+    std::snprintf(buffer, sizeof(buffer), " [%.3f]: %s%s %s -> %s", since_epoch,
+                  name.c_str(), padding, prev_str.c_str(), curr_str.c_str());
+    logger_->debug(buffer);
+}
+
+void RunnerLogger::flush() { logger_->flush(); }
 }  // namespace bchtree
