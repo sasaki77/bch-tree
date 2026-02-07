@@ -38,4 +38,11 @@ target_link_libraries(bchtree PUBLIC
 add_executable(bch-tree-cli src/main.cpp)
 target_link_libraries(bch-tree-cli PRIVATE bchtree cxxopts::cxxopts spdlog::spdlog)
 
+include(CTest)
+message( STATUS "BUILD_TESTING:   ${BUILD_TESTING} " )
+# Add tests only when this is the top-level project AND testing is enabled.
+if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
+
 install(TARGETS bch-tree-cli RUNTIME DESTINATION bin)

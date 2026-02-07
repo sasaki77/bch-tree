@@ -24,3 +24,15 @@ cmake --build --preset release
 # Clean
 cmake --build --preset release --target clean
 ```
+
+## Tests
+
+```bash
+export EPICS_BASE=/path/to/EPICS_BASE
+cmake --preset debug
+cmake --build --preset debug
+ctest --test-dir build/debug --output-on-failure
+
+# Clean
+cmake --build --preset debug --target clean
+```

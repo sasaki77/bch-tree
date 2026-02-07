@@ -7,5 +7,13 @@
     "cxxopts",
     "spdlog"
   ],
+  "features": {
+    "tests": {
+      "description": "Enable test-only dependencies",
+      "dependencies": [
+        "gtest"
+      ]
+    }
+  },
   "builtin-baseline": "cc73782a88db48af17f8bfb8328d4cab3d4c246f"
 }
