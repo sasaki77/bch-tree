@@ -105,11 +105,8 @@ void CAPV::PutHandler(struct event_handler_args args) {
     std::unique_ptr<PutCBCtx> cb_ctx(static_cast<PutCBCtx*>(args.usr));
     if (!cb_ctx || !cb_ctx->self) return;
 
-    if (args.status != ECA_NORMAL) {
-        cb_ctx->cb(false);
-    }
-
-    cb_ctx->cb(true);
+    bool success{args.status == ECA_NORMAL};
+    cb_ctx->cb(success);
 }
 
 void CAPV::MonitorHandler(struct event_handler_args args) {
