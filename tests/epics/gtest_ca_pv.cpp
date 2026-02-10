@@ -163,3 +163,35 @@ TYPED_TEST(PutCB_Typed, CAPV_PutCB_and_GetAs_GetCBAs) {
 
     EXPECT_EQ(got_cb_value, value);
 }
+
+TEST_F(SoftIocFixture, CAPV_Disconnect_Reconnect) {
+    CAPV pv(ctx_, "TEST:AO");
+    std::vector<bool> states;
+    std::promise<void> got_down;
+
+    pv.AddConnCB([&](bool up) {
+        states.push_back(up);
+        if (!up) got_down.set_value();
+    });
+
+    pv.Connect();
+    ASSERT_TRUE(WaitUntilConnected(pv, 20s))
+        << "CA connection did not become ready in time";
+
+    // Wait for shutdown
+    runner_.KillIfRunning();
+    ASSERT_EQ(got_down.get_future().wait_for(5s), std::future_status::ready)
+        << "No disconnect event";
+
+    runner_.Start(db_text_);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(800));
+
+    ASSERT_TRUE(WaitUntilConnected(pv, 20s))
+        << "CA connection did not become ready again in time";
+
+    ASSERT_GE(states.size(), 2u);
+    EXPECT_TRUE(states[0]);
+    EXPECT_FALSE(states[1]);
+    EXPECT_TRUE(states[2]);
+}

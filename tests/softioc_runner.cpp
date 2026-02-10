@@ -43,20 +43,27 @@ void SoftIocRunner::KillIfRunning() {
     // Try graceful SIGINT
     kill(pid_, SIGINT);
     for (int i = 0; i < 100; ++i) {  // 5s
-        if (waitpid(pid_, nullptr, WNOHANG) == pid_) return;
+        if (waitpid(pid_, nullptr, WNOHANG) == pid_) {
+            pid_ = -1;
+            return;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     // Then SIGTERM with longer grace
     kill(pid_, SIGTERM);
     for (int i = 0; i < 100; ++i) {  // 5s
-        if (waitpid(pid_, nullptr, WNOHANG) == pid_) return;
+        if (waitpid(pid_, nullptr, WNOHANG) == pid_) {
+            return;
+            pid_ = -1;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
     // Last resort
     kill(pid_, SIGKILL);
     waitpid(pid_, nullptr, 0);
+    pid_ = -1;
 }
 
 // Write DB text to a safely created temp file under testing::TempDir()
