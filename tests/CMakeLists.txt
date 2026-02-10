@@ -4,6 +4,7 @@ set(TEST_SOURCES
     softioc_runner.cpp
     softioc_fixture.cpp
     actions/gtest_print_node.cpp
+    actions/gtest_caget_node.cpp
     epics/gtest_ca_pv.cpp
     epics/gtest_ca_pv_manager.cpp
 )
