@@ -12,6 +12,7 @@
 #include "epics/ca/ca_pv.h"
 #include "epics/ca/ca_pv_manager.h"
 #include "epics/types.h"
+#include "node_test_helper.h"
 #include "softioc_fixture.h"
 
 using namespace bchtree;
@@ -22,16 +23,15 @@ class CAGetNodeFactoryHelper {
     CAGetNodeFactoryHelper(std::shared_ptr<CAContextManager> ctx)
         : ctx_(std::move(ctx)) {
         pv_manager_ = std::make_shared<PVManager>(ctx_);
-        registerNode();
-    }
+        factory_ = std::make_shared<BT::BehaviorTreeFactory>();
+        helper_ = std::make_unique<NodeTestHelper>(factory_);
 
-    void registerNode() {
-        factory_.registerNodeType<CAGetNode<double>>("CAGetDouble", ctx_,
-                                                     pv_manager_);
-        factory_.registerNodeType<CAGetNode<int>>("CAGetInt", ctx_,
-                                                  pv_manager_);
-        factory_.registerNodeType<CAGetNode<std::string>>("CAGetString", ctx_,
-                                                          pv_manager_);
+        factory_->registerNodeType<CAGetNode<double>>("CAGetDouble", ctx_,
+                                                      pv_manager_);
+        factory_->registerNodeType<CAGetNode<int>>("CAGetInt", ctx_,
+                                                   pv_manager_);
+        factory_->registerNodeType<CAGetNode<std::string>>("CAGetString", ctx_,
+                                                           pv_manager_);
     }
 
     // Build a single-node tree from XML, run until it finishes, and return
@@ -51,44 +51,22 @@ class CAGetNodeFactoryHelper {
             << " result=\"{" << result_key << "}\"/>"
             << R"(</BehaviorTree></root>)";
 
-        // Build the tree
-        factory_.registerBehaviorTreeFromText(xml.str());
-        blackboard_ = BT::Blackboard::create();
-        tree_ = factory_.createTree("MainTree", blackboard_);
+        BT::NodeStatus status =
+            helper_->runSingle(xml.str(), overall_timeout, step);
 
-        // First tick (onStart)
-        auto status = tree_.tickExactlyOnce();
-        if (status == BT::NodeStatus::SUCCESS ||
-            status == BT::NodeStatus::FAILURE) {
-            return status;
-        }
-
-        // Continue ticking until completion or timeout
-        const auto deadline =
-            std::chrono::steady_clock::now() + overall_timeout;
-
-        while (std::chrono::steady_clock::now() < deadline) {
-            std::this_thread::sleep_for(step);
-            status = tree_.tickExactlyOnce();
-            if (status == BT::NodeStatus::SUCCESS ||
-                status == BT::NodeStatus::FAILURE) {
-                return status;
-            }
-        }
         return status;  // Caller decides if it stays RUNNING
     }
 
     template <typename T>
     bool getFromBB(const std::string& result_key, T& out) const {
-        return blackboard_->get<T>(result_key, out);
+        return helper_->getFromBB(result_key, out);
     }
 
    private:
     std::shared_ptr<CAContextManager> ctx_;
     std::shared_ptr<PVManager> pv_manager_;
-    BT::BehaviorTreeFactory factory_;
-    BT::Tree tree_;
-    std::shared_ptr<BT::Blackboard> blackboard_;
+    std::shared_ptr<BT::BehaviorTreeFactory> factory_;
+    std::unique_ptr<NodeTestHelper> helper_;
 };
 
 //  Get double from TEST:AO with use_monitor=false
