@@ -1,6 +1,7 @@
 #include "softioc_runner.h"
 
 #include <gtest/gtest.h>
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -18,6 +19,19 @@ pid_t SoftIocRunner::Start(const std::string& db_text) {
     const std::string cmd = "softIoc -d \"" + temp_db_path_.string() + "\"";
 
     if (pid_ == 0) {
+        // Arrange to receive SIGTERM when parent dies.
+        // This attribute is preserved across execve.
+        if (prctl(PR_SET_PDEATHSIG, SIGTERM) == -1) {
+            // Use _exit to avoid flushing shared stdio buffers twice
+            _exit(127);
+        }
+
+        // Close a small race: parent could have died between fork and prctl.
+        // If parent is already 1 (init/systemd), decide to exit.
+        if (getppid() == 1) {
+            _exit(0);
+        }
+
         execl("/bin/sh", "sh", "-c", cmd.c_str(), (char*)nullptr);
 
         // exec failed: exit child immediately (127 = command-not-found).
