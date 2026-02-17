@@ -32,3 +32,13 @@ BT::NodeStatus NodeTestHelper::runSingle(
     }
     return status;  // Caller decides if it stays RUNNING
 }
+
+BT::NodeStatus NodeTestHelper::runOnce(std::string xml) {
+    // Build the tree
+    factory_->registerBehaviorTreeFromText(xml);
+    blackboard_ = BT::Blackboard::create();
+    tree_ = factory_->createTree("MainTree", blackboard_);
+
+    auto status = tree_.tickExactlyOnce();
+    return status;
+}

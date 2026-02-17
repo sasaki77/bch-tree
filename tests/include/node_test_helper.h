@@ -7,6 +7,7 @@ class NodeTestHelper {
     BT::NodeStatus runSingle(std::string xml,
                              std::chrono::milliseconds overall_timeout,
                              std::chrono::milliseconds step);
+    BT::NodeStatus runOnce(std::string xml);
 
     template <typename T>
     bool getFromBB(const std::string& key, T& value) const {

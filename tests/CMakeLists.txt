@@ -6,6 +6,7 @@ set(TEST_SOURCES
     utils/node_test_helper.cpp
     actions/gtest_print_node.cpp
     actions/gtest_caget_node.cpp
+    actions/gtest_caput_node.cpp
     epics/gtest_ca_pv.cpp
     epics/gtest_ca_pv_manager.cpp
 )
