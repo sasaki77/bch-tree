@@ -11,23 +11,13 @@
 #include <vector>
 
 #include "epics/ca/ca_pv.h"
+#include "helper_func.h"
 #include "softioc_fixture.h"
 
 using namespace std::chrono_literals;
 using bchtree::epics::ca::CAPV;
 
 // ---------- Helper functions ----------
-// Wait until CAPV::IsConnected() becomes true within timeout.
-static bool WaitUntilConnected(CAPV& pv,
-                               std::chrono::milliseconds timeout = 4s) {
-    const auto deadline = std::chrono::steady_clock::now() + timeout;
-    while (std::chrono::steady_clock::now() < deadline) {
-        if (pv.IsConnected()) return true;
-        std::this_thread::sleep_for(50ms);
-    }
-    return false;
-}
-
 // Run 'caget -t <pv>' and return its output string.
 static std::string RunCagetTrimmed(const char* pvname) {
     std::string cmd = std::string("caget -t ") + pvname;

@@ -11,22 +11,13 @@
 #include "epics/ca/ca_pv.h"
 #include "epics/ca/ca_pv_manager.h"
 #include "epics/types.h"
+#include "helper_func.h"
 #include "node_test_helper.h"
 #include "softioc_fixture.h"
 
 using namespace bchtree;
 using namespace bchtree::epics::ca;
 using namespace std::chrono_literals;
-
-static bool WaitUntilConnected(CAPV& pv,
-                               std::chrono::milliseconds timeout = 4s) {
-    const auto deadline = std::chrono::steady_clock::now() + timeout;
-    while (std::chrono::steady_clock::now() < deadline) {
-        if (pv.IsConnected()) return true;
-        std::this_thread::sleep_for(50ms);
-    }
-    return false;
-}
 
 template <typename T>
 std::optional<T> ReadPV(

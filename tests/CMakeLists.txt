@@ -4,6 +4,7 @@ set(TEST_SOURCES
     softioc_runner.cpp
     softioc_fixture.cpp
     utils/node_test_helper.cpp
+    utils/helper_func.cpp
     actions/gtest_print_node.cpp
     actions/gtest_caget_node.cpp
     actions/gtest_caput_node.cpp
