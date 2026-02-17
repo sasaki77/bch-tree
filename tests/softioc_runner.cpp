@@ -4,79 +4,101 @@
 #include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h>
 
 #include <chrono>
 #include <fstream>
-#include <string>
-#include <thread>
+using namespace std::chrono_literals;
 
 pid_t SoftIocRunner::Start(const std::string& db_text) {
     WriteDBtoTemp(db_text);
 
-    // Spawn a child process to run 'cmd' and return PID
     pid_ = fork();
-    const std::string cmd = "softIoc -d \"" + temp_db_path_.string() + "\"";
+    if (pid_ == -1) {
+        throw std::runtime_error("fork failed");
+    }
 
     if (pid_ == 0) {
-        // Arrange to receive SIGTERM when parent dies.
-        // This attribute is preserved across execve.
+        // --- Child ---
+        // Ask kernel to deliver SIGTERM to us if parent dies.
+        // This attribute survives execve.
         if (prctl(PR_SET_PDEATHSIG, SIGTERM) == -1) {
-            // Use _exit to avoid flushing shared stdio buffers twice
-            _exit(127);
+            _exit(127);  // do not flush stdio
         }
-
-        // Close a small race: parent could have died between fork and prctl.
-        // If parent is already 1 (init/systemd), decide to exit.
+        // Close a small race: parent could have died just before prctl.
         if (getppid() == 1) {
             _exit(0);
         }
 
-        execl("/bin/sh", "sh", "-c", cmd.c_str(), (char*)nullptr);
+        execlp("softIoc", "softIoc", "-d", temp_db_path_.c_str(),
+               (char*)nullptr);
 
-        // exec failed: exit child immediately (127 = command-not-found).
-        // Use _exit() to avoid stdio/atexit effects.
+        // If exec fails, exit immediately (127 is conventional for "command not
+        // found").
         _exit(127);
     }
+
+    // --- Parent ---
+    // Launch a single reaper that will waitpid() exactly once.
+    // This avoids polling loops and guarantees zombie reaping.
+    waiter_ = std::async(std::launch::async, [pid = pid_]() -> int {
+        int status = 0;
+        pid_t r;
+        do {
+            r = ::waitpid(pid, &status, 0);  // blocking wait
+        } while (r == -1 && errno == EINTR);
+        return status;  // WEXITSTATUS/WTERMSIG can be inspected by caller
+                        // if needed
+    });
 
     return pid_;
 }
 
 void SoftIocRunner::KillIfRunning() {
-    // If process is alive, try SIGTERM then SIGKILL
     if (pid_ <= 0) {
         return;
     }
 
-    // Remove the temp db file
-    std::error_code ec;
+    // Try signals in increasing severity: SIGINT -> SIGTERM -> SIGKILL.
+    auto wait_ready = [this](std::chrono::milliseconds dur) {
+        if (waiter_.valid()) {
+            return waiter_.wait_for(dur) == std::future_status::ready;
+        }
+        return false;
+    };
+
+    // Graceful: SIGINT and short wait
+    ::kill(pid_, SIGINT);
+    if (wait_ready(5s)) {
+        // Child has exited; cleanup and return
+        if (!temp_db_path_.empty()) {
+            std::error_code ec;
+            std::filesystem::remove(temp_db_path_, ec);
+        }
+        pid_ = -1;
+        return;
+    }
+
+    // More forceful: SIGTERM and another wait
+    ::kill(pid_, SIGTERM);
+    if (wait_ready(5s)) {
+        if (!temp_db_path_.empty()) {
+            std::error_code ec;
+            std::filesystem::remove(temp_db_path_, ec);
+        }
+        pid_ = -1;
+        return;
+    }
+
+    // Last resort: SIGKILL and wait until the reaper finishes
+    ::kill(pid_, SIGKILL);
+    if (waiter_.valid()) {
+        waiter_.wait();  // ensure the zombie is reaped
+    }
+
     if (!temp_db_path_.empty()) {
+        std::error_code ec;
         std::filesystem::remove(temp_db_path_, ec);
     }
-
-    // Try graceful SIGINT
-    kill(pid_, SIGINT);
-    for (int i = 0; i < 100; ++i) {  // 5s
-        if (waitpid(pid_, nullptr, WNOHANG) == pid_) {
-            pid_ = -1;
-            return;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-
-    // Then SIGTERM with longer grace
-    kill(pid_, SIGTERM);
-    for (int i = 0; i < 100; ++i) {  // 5s
-        if (waitpid(pid_, nullptr, WNOHANG) == pid_) {
-            return;
-            pid_ = -1;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-
-    // Last resort
-    kill(pid_, SIGKILL);
-    waitpid(pid_, nullptr, 0);
     pid_ = -1;
 }
 
