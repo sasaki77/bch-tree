@@ -37,7 +37,8 @@ class BTRunner {
                       std::shared_ptr<epics::ca::PVManager> pv_manager)
         : ctx_(std::move(ctx)), pv_manager_(std::move(pv_manager)) {}
 
-    bool Run();
+    bool Run(
+        std::chrono::milliseconds sleep_time = std::chrono::milliseconds(10));
     void PrintTree();
     void SetLogger(std::shared_ptr<Logger> logger);
     void UseRunnerLogger();

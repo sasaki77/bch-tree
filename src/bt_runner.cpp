@@ -17,7 +17,7 @@ void BTRunner::PrintTree() {
     BT::printTreeRecursively(tree_.rootNode());
 }
 
-bool BTRunner::Run() {
+bool BTRunner::Run(std::chrono::milliseconds sleep_time) {
     if (!initialized_) {
         if (logger_) {
             logger_->info("BTRunner: Runner is not initialized");
@@ -33,7 +33,7 @@ bool BTRunner::Run() {
         runner_logger_ = std::make_unique<RunnerLogger>(tree_, logger_);
     }
 
-    const BT::NodeStatus status = tree_.tickWhileRunning();
+    const BT::NodeStatus status = tree_.tickWhileRunning(sleep_time);
 
     if (logger_) {
         logger_->info(std::string("End Tree: status=") + toStr(status));

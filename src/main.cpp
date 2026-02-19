@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cxxopts.hpp>
 #include <iostream>
 
@@ -12,7 +13,8 @@ int main(int argc, char** argv) {
       ("t,tree", "XML tree file", cxxopts::value<std::string>())
       ("log-level", "log level (info|warn|error|debug)", cxxopts::value<std::string>()->default_value("info"))
       ("log-file", "log file path", cxxopts::value<std::string>()->default_value(""))
-      ("print-tree", "print tree", cxxopts::value<bool>()->default_value("false")->implicit_value("true")),
+      ("print-tree", "print tree", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
+      ("sleep-time", "sleep time for tick in msec", cxxopts::value<int>()->default_value("10"))
       ("h,help", "print usage");
     // clang-format on
 
@@ -49,7 +51,9 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    bool success = runner.Run();
+    auto sleep_time_arg = result["sleep-time"].as<int>();
+    auto sleep_time = std::chrono::milliseconds(sleep_time_arg);
+    bool success = runner.Run(sleep_time);
     if (success) {
         return 0;
     }
