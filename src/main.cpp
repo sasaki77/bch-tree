@@ -5,6 +5,12 @@
 #include "bt_runner.h"
 #include "logger.h"
 
+enum ExitCode {
+    OK = 0,            // Tree SUCCESS
+    TREE_FAILURE = 1,  // Tree FAILURE
+    USAGE_ERROR = 2,   // argument error (--tree missing etc.)
+};
+
 int main(int argc, char** argv) {
     cxxopts::Options options("bch-tree-cli", "bch-tree CLI Runner");
 
@@ -21,7 +27,7 @@ int main(int argc, char** argv) {
     auto result = options.parse(argc, argv);
     if (result.count("help") || !result.count("tree")) {
         std::cout << options.help() << std::endl;
-        return 2;
+        return USAGE_ERROR;
     }
 
     auto logger = std::make_shared<bchtree::Logger>();
@@ -48,15 +54,15 @@ int main(int argc, char** argv) {
 
     if (result["print-tree"].as<bool>()) {
         runner.PrintTree();
-        return 0;
+        return OK;
     }
 
     auto sleep_time_arg = result["sleep-time"].as<int>();
     auto sleep_time = std::chrono::milliseconds(sleep_time_arg);
     bool success = runner.Run(sleep_time);
     if (success) {
-        return 0;
+        return OK;
     }
 
-    return 1;
+    return TREE_FAILURE;
 }
