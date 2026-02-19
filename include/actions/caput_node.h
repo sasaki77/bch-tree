@@ -122,6 +122,7 @@ class CAPutNode : public BT::StatefulActionNode {
         }
 
         done_ = success;
+        emitWakeUpSignal();
     }
 
     void handleConnection(bool connected) { connected_ = connected; }

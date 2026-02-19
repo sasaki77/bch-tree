@@ -137,6 +137,7 @@ class CAGetNode : public BT::StatefulActionNode {
 
         promise_.set_value(sample);
         done_ = true;
+        emitWakeUpSignal();
     }
 
     void handleConnection(bool connected) { connected_ = connected; }
