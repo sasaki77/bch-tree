@@ -20,6 +20,7 @@ int main(int argc, char** argv) {
       ("log-level", "log level (info|warn|error|debug)", cxxopts::value<std::string>()->default_value("info"))
       ("log-file", "log file path", cxxopts::value<std::string>()->default_value(""))
       ("print-tree", "print tree", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
+      ("s,set", "Set global blackboard entry (key=value). Repeatable.", cxxopts::value<std::vector<std::string>>()->default_value({}))
       ("sleep-time", "sleep time for tick in msec", cxxopts::value<int>()->default_value("10"))
       ("h,help", "print usage");
     // clang-format on
@@ -47,6 +48,25 @@ int main(int argc, char** argv) {
     runner.SetLogger(logger);
     if (log_level == "debug") {
         runner.UseRunnerLogger();
+    }
+
+    // Parse --set key=value pairs and pass them to BTRunner BEFORE
+    // RegisterTreeFromFile().
+    if (result.count("set")) {
+        const auto pairs = result["set"].as<std::vector<std::string>>();
+        for (const auto& kv : pairs) {
+            // Expected format: key=value (no spaces)
+            const auto pos = kv.find('=');
+            if (pos == std::string::npos) {
+                logger->error(std::string("Invalid --set '") + kv +
+                              "'. Expected key=value.");
+                return USAGE_ERROR;
+            }
+            const std::string key = kv.substr(0, pos);
+            const std::string val = kv.substr(pos + 1);
+            // Note: keys are plain strings (e.g., "@head", "mode", etc.)
+            runner.SetGlobalBB(key, val);
+        }
     }
 
     const std::string treePath = result["tree"].as<std::string>();

@@ -43,10 +43,18 @@ bool BTRunner::Run(std::chrono::milliseconds sleep_time) {
 }
 
 void BTRunner::SetLogger(std::shared_ptr<Logger> logger) { logger_ = logger; }
+
+void BTRunner::SetGlobalBB(std::string key, std::string value) {
+    globals_bb_map_[std::move(key)] = std::move(value);
+}
+
 void BTRunner::UseRunnerLogger() { use_runner_logger_ = true; }
 
 void BTRunner::RegisterTreeFromFile(const std::string& treePath) {
     blackboard_ = BT::Blackboard::create();
+    for (const auto& [k, v] : globals_bb_map_) {
+        blackboard_->set(k, v);
+    }
 
     factory_.registerNodeType<CAGetNode<epics::PVData>>("CAGet", ctx_,
                                                         pv_manager_);

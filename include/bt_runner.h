@@ -41,6 +41,7 @@ class BTRunner {
         std::chrono::milliseconds sleep_time = std::chrono::milliseconds(10));
     void PrintTree();
     void SetLogger(std::shared_ptr<Logger> logger);
+    void SetGlobalBB(std::string key, std::string value);
     void UseRunnerLogger();
     void RegisterTreeFromFile(const std::string& treePath);
 
@@ -56,6 +57,8 @@ class BTRunner {
     bool initialized_{false};
     bool use_runner_logger_{false};
     std::unique_ptr<RunnerLogger> runner_logger_;
+
+    std::unordered_map<std::string, std::string> globals_bb_map_;
 };
 
 }  // namespace bchtree
