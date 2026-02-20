@@ -89,17 +89,15 @@ void RunnerLogger::callback(BT::Duration timestamp, const BT::TreeNode& node,
     constexpr const char* whitespaces = "                         ";
     constexpr size_t ws_count = 25;
 
-    const double since_epoch = duration<double>(timestamp).count();
-
     const std::string& name = node.name();
     const char* padding = &whitespaces[std::min(ws_count, name.size())];
 
-    const std::string prev_str = BT::toStr(prev_status, /*colored=*/true);
-    const std::string curr_str = BT::toStr(status, /*colored=*/true);
+    const std::string prev_str = BT::toStr(prev_status, /*colored=*/false);
+    const std::string curr_str = BT::toStr(status, /*colored=*/false);
 
     char buffer[256];
-    std::snprintf(buffer, sizeof(buffer), " [%.3f]: %s%s %s -> %s", since_epoch,
-                  name.c_str(), padding, prev_str.c_str(), curr_str.c_str());
+    std::snprintf(buffer, sizeof(buffer), " %s%s %s -> %s", name.c_str(),
+                  padding, prev_str.c_str(), curr_str.c_str());
     logger_->debug(buffer);
 }
 

@@ -17,7 +17,8 @@ int main(int argc, char** argv) {
     // clang-format off
     options.add_options()
       ("t,tree", "XML tree file", cxxopts::value<std::string>())
-      ("log-level", "log level (info|warn|error|debug)", cxxopts::value<std::string>()->default_value("info"))
+      ("log-level-console", "(trace|debug|info|warn|error|critical|off)", cxxopts::value<std::string>()->default_value("info"))
+      ("log-level-file", "(trace|debug|info|warn|error|critical|off)", cxxopts::value<std::string>()->default_value("info"))
       ("log-file", "log file path", cxxopts::value<std::string>()->default_value(""))
       ("print-tree", "print tree", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
       ("s,set", "Set global blackboard entry (key=value). Repeatable.", cxxopts::value<std::vector<std::string>>()->default_value({}))
@@ -26,14 +27,20 @@ int main(int argc, char** argv) {
     // clang-format on
 
     auto result = options.parse(argc, argv);
+
     if (result.count("help") || !result.count("tree")) {
         std::cout << options.help() << std::endl;
         return USAGE_ERROR;
     }
 
     auto logger = std::make_shared<bchtree::Logger>();
-    auto log_level = result["log-level"].as<std::string>();
-    logger->setLevel(log_level);
+
+    // Read per-sink levels from CLI (use defaults if not provided)
+    const auto console_level = result["log-level-console"].as<std::string>();
+    const auto file_level = result["log-level-file"].as<std::string>();
+
+    logger->setConsoleLevel(console_level);
+    logger->setFileLevel(file_level);
 
     auto logfile = result["log-file"].as<std::string>();
     if (!logfile.empty()) {
@@ -46,7 +53,8 @@ int main(int argc, char** argv) {
 
     bchtree::BTRunner runner(ctx, pv_manager);
     runner.SetLogger(logger);
-    if (log_level == "debug") {
+
+    if (console_level == "debug" || file_level == "debug") {
         runner.UseRunnerLogger();
     }
 
