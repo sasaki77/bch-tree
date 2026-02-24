@@ -83,6 +83,36 @@ bool CAPV::PutCB(const PVScalarValue& v, PutCallback cb) {
     return true;
 }
 
+// Only support blocked put (waiting for completion)
+bool CAPV::Put(const PVScalarValue& v,
+               const std::chrono::milliseconds timeout) {
+    auto prom = std::make_shared<std::promise<bool>>();
+    auto fut = prom->get_future();
+
+    // Enqueue the async put with a completion callback.
+    const bool enq = PutCB(v, [prom](bool success) {
+        try {
+            prom->set_value(success);
+        } catch (const std::future_error&) {
+            // Ignore if the value was already set or future was retrieved.
+        }
+    });
+
+    if (!enq) {
+        return false;
+    }
+
+    // Wait up to timeout for completion.
+    const auto st = fut.wait_for(timeout);
+    if (st == std::future_status::ready) {
+        // Propagate the actual result from the callback.
+        return fut.get();
+    }
+
+    // Timed out.
+    return false;
+}
+
 std::string CAPV::GetPVname() const { return pv_name_; };
 
 bool CAPV::IsConnected() const {

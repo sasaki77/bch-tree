@@ -67,6 +67,8 @@ class CAPV {
     }
 
     bool PutCB(const PVScalarValue& v, PutCallback cb);
+    bool Put(const PVScalarValue& v, const std::chrono::milliseconds timeout =
+                                         std::chrono::milliseconds(3000));
 
     std::string GetPVname() const;
     bool IsConnected() const;
