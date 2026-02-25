@@ -4,6 +4,7 @@
 #include <behaviortree_cpp/xml_parsing.h>
 
 #include "actions/caget_node.h"
+#include "actions/camonitor_node.h"
 #include "actions/caput_node.h"
 #include "actions/print_node.h"
 
@@ -69,6 +70,16 @@ void BTRunner::RegisterTreeFromFile(const std::string& treePath) {
     factory_.registerNodeType<CAPutNode<int>>("CAPutInt", ctx_, pv_manager_);
     factory_.registerNodeType<CAPutNode<std::string>>("CAPutString", ctx_,
                                                       pv_manager_);
+
+    // factory_.registerNodeType<CAMonitorNode<epics::PVData>>("CAMonitor",
+    // ctx_, pv_manager_);
+    factory_.registerNodeType<CAMonitorNode<double>>("CAMonitorDouble", ctx_,
+                                                     pv_manager_);
+    factory_.registerNodeType<CAMonitorNode<int>>("CAMonitorInt", ctx_,
+                                                  pv_manager_);
+    factory_.registerNodeType<CAMonitorNode<std::string>>("CAMonitorString",
+                                                          ctx_, pv_manager_);
+
     factory_.registerNodeType<PrintNode>("Print");
 
     factory_.registerBehaviorTreeFromFile(treePath);
