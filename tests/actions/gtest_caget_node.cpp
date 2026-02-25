@@ -115,6 +115,20 @@ TEST_F(SoftIocFixture, CAGetNode_GetString_FactoryHelper) {
     EXPECT_EQ(got, "Hello");
 }
 
+// Get std::string from TEST:AO with use_monitor=false
+TEST_F(SoftIocFixture, CAGetNode_GetString_FromAO_FactoryHelper) {
+    ASSERT_EQ(system("caput -t TEST:AO 2.0"), 0);
+    CAGetNodeFactoryHelper helper(ctx_);
+
+    const std::string key = "out";
+    auto status = helper.runSingle("CAGetString", "TEST:AO", 2000, false, key);
+    ASSERT_EQ(status, BT::NodeStatus::SUCCESS);
+
+    std::string got;
+    ASSERT_TRUE(helper.getFromBB<std::string>(key, got));
+    EXPECT_EQ(got, "2.000000");
+}
+
 // use_monitor=true path (TEST:AO)
 TEST_F(SoftIocFixture, CAGetNode_UseMonitor_FactoryHelper) {
     ASSERT_EQ(system("caput -t TEST:AO 7.5"), 0);

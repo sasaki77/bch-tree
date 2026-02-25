@@ -61,7 +61,6 @@ class CAPV {
         if (st != ECA_NORMAL) {
             // Reclaim ownership
             std::unique_ptr<GetCBCtxAs<T>> reclaim(raw);
-            std::cout << "status=" << st << " : " << ca_message(st) << "\n";
             return false;
         }
         ca_flush_io();
@@ -126,6 +125,7 @@ class CAPV {
     static T extract_as(const PVData& d) {
         // Try exact type first
         if (const auto* pv = std::get_if<PVScalarValue>(&d.value)) {
+            // Exact match returns immediately
             if (const auto* exact = std::get_if<T>(pv)) {
                 return *exact;
             }
@@ -150,6 +150,20 @@ class CAPV {
             }
             if constexpr (std::is_same_v<T, std::string>) {
                 if (const auto* s = std::get_if<std::string>(pv)) return *s;
+
+                return std::visit(
+                    [](const auto& val) -> std::string {
+                        using S = std::decay_t<decltype(val)>;
+                        if constexpr (std::is_same_v<S, int32_t> ||
+                                      std::is_same_v<S, float> ||
+                                      std::is_same_v<S, double> ||
+                                      std::is_same_v<S, uint16_t>) {
+                            return std::to_string(val);
+                        } else {
+                            throw std::runtime_error("unsupported DBR type");
+                        }
+                    },
+                    *pv);
             }
         }
         // if (const auto* pa = std::get_if<ArrayValue>(&d.value)) {

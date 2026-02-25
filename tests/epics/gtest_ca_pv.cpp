@@ -236,6 +236,23 @@ TEST_F(SoftIocFixture, Monitor_STRO_AsString) {
     EXPECT_EQ(received.back(), "world");
 }
 
+TEST_F(SoftIocFixture, Monitor_AO_AsString) {
+    CAPV pv(ctx_, "TEST:AO");
+
+    pv.Connect();
+    ASSERT_TRUE(WaitUntilConnected(pv));
+
+    std::vector<std::string> received;
+    pv.AddMonitorCBAs<std::string>(
+        [&received](std::string v) { received.push_back(v); });
+
+    pv.Put(1);
+    pv.Put(2);
+
+    EXPECT_EQ(received.size(), 2);
+    EXPECT_EQ(received.back(), "2.000000");
+}
+
 TEST_F(SoftIocFixture, Monitor_AO_MultipleCallbacks_Fire) {
     CAPV pv(ctx_, "TEST:AO");
 
