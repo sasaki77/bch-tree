@@ -185,3 +185,74 @@ TEST_F(SoftIocFixture, CAPV_Disconnect_Reconnect) {
     EXPECT_FALSE(states[1]);
     EXPECT_TRUE(states[2]);
 }
+
+TEST_F(SoftIocFixture, Monitor_AO_AsDouble) {
+    CAPV pv(ctx_, "TEST:AO");
+
+    pv.Connect();
+    ASSERT_TRUE(WaitUntilConnected(pv));
+
+    std::vector<double> received;
+    pv.AddMonitorCBAs<double>([&received](double v) { received.push_back(v); });
+
+    pv.Put(1.23);
+    pv.Put(4.56);
+    pv.Put(7.89);
+
+    EXPECT_EQ(received.size(), 3);
+    EXPECT_NEAR(received.back(), 7.89, 1e-9);
+}
+
+TEST_F(SoftIocFixture, Monitor_LO_AsInt32) {
+    CAPV pv(ctx_, "TEST:LO");
+
+    pv.Connect();
+    ASSERT_TRUE(WaitUntilConnected(pv));
+
+    std::vector<int> received;
+    pv.AddMonitorCBAs<int>([&received](int v) { received.push_back(v); });
+
+    pv.Put(10);
+    pv.Put(-3);
+
+    EXPECT_EQ(received.size(), 2);
+    EXPECT_EQ(received.back(), -3);
+}
+
+TEST_F(SoftIocFixture, Monitor_STRO_AsString) {
+    CAPV pv(ctx_, "TEST:STRO");
+
+    pv.Connect();
+    ASSERT_TRUE(WaitUntilConnected(pv));
+
+    std::vector<std::string> received;
+    pv.AddMonitorCBAs<std::string>(
+        [&received](std::string v) { received.push_back(v); });
+
+    pv.Put("hello");
+    pv.Put("world");
+
+    EXPECT_EQ(received.size(), 2);
+    EXPECT_EQ(received.back(), "world");
+}
+
+TEST_F(SoftIocFixture, Monitor_AO_MultipleCallbacks_Fire) {
+    CAPV pv(ctx_, "TEST:AO");
+
+    pv.Connect();
+    ASSERT_TRUE(WaitUntilConnected(pv));
+
+    std::mutex m;
+    std::condition_variable cv;
+    int cb1 = 0;
+    int cb2 = 0;
+
+    pv.AddMonitorCBAs<double>([&cb1](double v) { cb1++; });
+    pv.AddMonitorCBAs<double>([&cb2](double v) { cb2++; });
+
+    pv.Put(100);
+    pv.Put(200);
+
+    EXPECT_EQ(cb1, cb2);
+    EXPECT_GE(cb1, 2);
+}

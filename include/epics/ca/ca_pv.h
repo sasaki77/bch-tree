@@ -18,6 +18,9 @@ template <typename T>
 using GetCallbackAs = std::function<void(T)>;
 
 template <typename T>
+using MonitorCallbackAs = std::function<void(T)>;
+
+template <typename T>
 struct GetCBCtxAs {
     CAPV* self;
     GetCallbackAs<T> cb;
@@ -69,6 +72,22 @@ class CAPV {
     bool PutCB(const PVScalarValue& v, PutCallback cb);
     bool Put(const PVScalarValue& v, const std::chrono::milliseconds timeout =
                                          std::chrono::milliseconds(3000));
+
+    template <typename T>
+    void AddMonitorCBAs(MonitorCallbackAs<T> cb) {
+        {
+            std::lock_guard<std::mutex> g(mtx_);
+            auto typed_cb = [fn = std::move(cb)](const PVData& d) {
+                if constexpr (std::is_same_v<T, PVData>) {
+                    fn(d);
+                } else {
+                    fn(extract_as<T>(d));
+                }
+            };
+            typed_cbs_.emplace_back(typed_cb);
+        }
+        EnsureStartMonitor();
+    }
 
     std::string GetPVname() const;
     bool IsConnected() const;
@@ -156,6 +175,7 @@ class CAPV {
     std::shared_ptr<CAContextManager> ctx_;
 
     std::vector<ConnCallback> conn_cbs_;
+    std::vector<std::function<void(const PVData&)>> typed_cbs_;
 
     chtype native_type_ = 0;
     size_t elem_count_ = 0;

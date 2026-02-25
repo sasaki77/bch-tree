@@ -1,5 +1,7 @@
 #include "epics/ca/ca_pv.h"
 
+#include <future>
+
 namespace bchtree::epics::ca {
 
 struct PutCBCtx {
@@ -158,8 +160,22 @@ void CAPV::MonitorHandler(struct event_handler_args args) {
         return;
     }
 
-    std::lock_guard<std::mutex> lock(self->mtx_);
-    self->pvdata_ = DecodePVScalar(args.type, args.dbr);
+    std::vector<std::function<void(const PVData&)>> cbs;
+    PVData pvdata_cache;
+
+    {
+        std::lock_guard<std::mutex> lock(self->mtx_);
+        self->pvdata_ = DecodePVScalar(args.type, args.dbr);
+        pvdata_cache = self->pvdata_;
+
+        // Copy callbacks to avoid holding lock while invoking user code
+        cbs = self->typed_cbs_;
+    }
+
+    // Invoke outside of CAPV's lock
+    for (auto& f : cbs) {
+        if (f) f(pvdata_cache);
+    }
 }
 
 void CAPV::EnsureStartMonitor() {
