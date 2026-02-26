@@ -4,10 +4,10 @@ class NodeTestHelper {
    public:
     NodeTestHelper(std::shared_ptr<BT::BehaviorTreeFactory> factory);
     void registerNode();
-    BT::NodeStatus runSingle(std::string xml,
-                             std::chrono::milliseconds overall_timeout,
+    void buildTree(std::string xml);
+    BT::NodeStatus runSingle(std::chrono::milliseconds overall_timeout,
                              std::chrono::milliseconds step);
-    BT::NodeStatus runOnce(std::string xml);
+    BT::NodeStatus runOnce();
 
     template <typename T>
     bool getFromBB(const std::string& key, T& value) const {

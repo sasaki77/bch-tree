@@ -51,8 +51,8 @@ class CAGetNodeFactoryHelper {
             << " result=\"{" << result_key << "}\"/>"
             << R"(</BehaviorTree></root>)";
 
-        BT::NodeStatus status =
-            helper_->runSingle(xml.str(), overall_timeout, step);
+        helper_->buildTree(xml.str());
+        BT::NodeStatus status = helper_->runSingle(overall_timeout, step);
 
         return status;  // Caller decides if it stays RUNNING
     }

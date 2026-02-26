@@ -3,15 +3,16 @@
 NodeTestHelper::NodeTestHelper(std::shared_ptr<BT::BehaviorTreeFactory> factory)
     : factory_(std::move(factory)) {}
 
-BT::NodeStatus NodeTestHelper::runSingle(
-    std::string xml,
-    std::chrono::milliseconds overall_timeout = std::chrono::milliseconds(3000),
-    std::chrono::milliseconds step = std::chrono::milliseconds(20)) {
+void NodeTestHelper::buildTree(std::string xml) {
     // Build the tree
     factory_->registerBehaviorTreeFromText(xml);
     blackboard_ = BT::Blackboard::create();
     tree_ = factory_->createTree("MainTree", blackboard_);
+}
 
+BT::NodeStatus NodeTestHelper::runSingle(
+    std::chrono::milliseconds overall_timeout = std::chrono::milliseconds(3000),
+    std::chrono::milliseconds step = std::chrono::milliseconds(20)) {
     // First tick (onStart)
     auto status = tree_.tickExactlyOnce();
     if (status == BT::NodeStatus::SUCCESS ||
@@ -33,12 +34,7 @@ BT::NodeStatus NodeTestHelper::runSingle(
     return status;  // Caller decides if it stays RUNNING
 }
 
-BT::NodeStatus NodeTestHelper::runOnce(std::string xml) {
-    // Build the tree
-    factory_->registerBehaviorTreeFromText(xml);
-    blackboard_ = BT::Blackboard::create();
-    tree_ = factory_->createTree("MainTree", blackboard_);
-
+BT::NodeStatus NodeTestHelper::runOnce() {
     auto status = tree_.tickExactlyOnce();
     return status;
 }

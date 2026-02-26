@@ -72,7 +72,8 @@ class CAPutNodeFactoryHelper {
             << "/>"
             << R"(</BehaviorTree></root>)";
 
-        return helper_->runSingle(xml.str(), overall_timeout, step);
+        helper_->buildTree(xml.str());
+        return helper_->runSingle(overall_timeout, step);
     }
 
     // Build a single-node tree from XML, run until it finishes, and return
@@ -91,7 +92,8 @@ class CAPutNodeFactoryHelper {
             << "/>"
             << R"(</BehaviorTree></root>)";
 
-        return helper_->runOnce(xml.str());
+        helper_->buildTree(xml.str());
+        return helper_->runOnce();
     }
 
     std::shared_ptr<PVManager> GetPVManager() { return pv_manager_; }
