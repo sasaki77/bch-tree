@@ -8,6 +8,7 @@ set(TEST_SOURCES
     actions/gtest_print_node.cpp
     actions/gtest_caget_node.cpp
     actions/gtest_caput_node.cpp
+    actions/gtest_camonitor_node.cpp
     epics/gtest_ca_pv.cpp
     epics/gtest_ca_pv_manager.cpp
 )
