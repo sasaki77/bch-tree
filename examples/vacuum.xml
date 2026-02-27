@@ -1,0 +1,71 @@
+<!-- Start IOC with db/vacuum.db before running the tree -->
+<root BTCPP_format="4">
+  <BehaviorTree ID="MainTree">
+    <Sequence>
+      <Sequence name="Init Sequence">
+        <Script code="@pv_pres := @head + 'PRES'" />
+        <Script code="@pv_rough := @head + 'ROUGH'" />
+        <Script code="@pv_cryo := @head + 'CRYO'" />
+        <Script code="@pv_valve := @head + 'VALVE'" />
+        <Script code="@pv_stat := @head + 'STAT'" />
+      </Sequence>
+      <KeepRunningUntilFailure>
+        <SubTree ID="MainProcess" />
+      </KeepRunningUntilFailure>
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="MainProcess">
+    <ReactiveSequence>
+      <CAGetDouble pv="{@pv_pres}" result="{pres}" />
+      <Script
+        code="
+            is_high := pres <= 0.0000049;
+            is_low  := pres >  0.0000051;
+            is_inter:= !is_high && !is_low;
+        " />
+
+      <ReactiveFallback>
+        <SubTree ID="EnterHighVacuum" _while="is_high" />
+        <Sequence name="LowVacuumSeq" _while="is_low">
+          <SubTree ID="EnterLowVacuum" />
+          <SubTree ID="LowToFault" />
+        </Sequence>
+        <ScriptCondition name="IntermediateCondCheck" code="is_inter" />
+      </ReactiveFallback>
+
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="EnterHighVacuum">
+    <Sequence>
+      <CAPutInt pv="{@pv_rough}" value="0" />
+      <CAPutInt pv="{@pv_cryo}" value="1" />
+      <CAPutInt pv="{@pv_valve}" value="1" />
+      <CAPutString pv="{@pv_stat}" value="High Vacuum State" />
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="EnterLowVacuum">
+    <Sequence>
+      <CAPutInt pv="{@pv_rough}" value="1" />
+      <CAPutInt pv="{@pv_cryo}" value="0" />
+      <CAPutInt pv="{@pv_valve}" value="0" />
+      <CAPutString pv="{@pv_stat}" value="Low Vacuum State"
+      />
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="LowToFault">
+    <Delay delay_msec="5000">
+      <Sequence name="EnterFaultState">
+        <CAPutInt pv="{@pv_rough}" value="0" />
+        <CAPutInt pv="{@pv_cryo}" value="0" />
+        <CAPutInt pv="{@pv_valve}" value="0" />
+        <CAPutString pv="{@pv_stat}" value="Fault State" />
+        <AlwaysFailure />
+      </Sequence>
+    </Delay>
+  </BehaviorTree>
+
+</root>

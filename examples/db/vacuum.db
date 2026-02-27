@@ -1,0 +1,25 @@
+record(ai, "$(user):VAC:PRES") {
+    field(DESC, "Pressure")
+}
+
+record(bo, "$(user):VAC:CRYO") {
+    field(DESC, "Cryo Pump Power")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+}
+
+record(bo, "$(user):VAC:ROUGH") {
+    field(DESC, "Rough Pump Power")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+}
+
+record(bo, "$(user):VAC:VALVE") {
+    field(DESC, "Valve Status")
+    field(ZNAM, "Closed")
+    field(ONAM, "Open")
+}
+
+record(stringout, "$(user):VAC:STAT") {
+    field(DESC, "Current Status")
+}
