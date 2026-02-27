@@ -18,6 +18,7 @@ int main(int argc, char** argv) {
     // clang-format off
     options.add_options()
       ("t,tree", "XML tree file", cxxopts::value<std::string>())
+      ("tree-id", "Tree ID for root tree", cxxopts::value<std::string>()->default_value("MainTree"))
       ("log-level-console", "(trace|debug|info|warn|error|critical|off)", cxxopts::value<std::string>()->default_value("info"))
       ("log-level-file", "(trace|debug|info|warn|error|critical|off)", cxxopts::value<std::string>()->default_value("info"))
       ("log-file", "log file path", cxxopts::value<std::string>()->default_value(""))
@@ -91,9 +92,11 @@ int main(int argc, char** argv) {
         }
     }
 
+    const std::string tree_id = result["tree-id"].as<std::string>();
+
     auto sleep_time_arg = result["sleep-time"].as<int>();
     auto sleep_time = std::chrono::milliseconds(sleep_time_arg);
-    bool success = runner.Run("MainTree", bb_map, sleep_time);
+    bool success = runner.Run(tree_id, bb_map, sleep_time);
     if (success) {
         return OK;
     }
