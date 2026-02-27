@@ -2,6 +2,7 @@
 #include <cxxopts.hpp>
 #include <iostream>
 
+#include "bt_factory_host.h"
 #include "bt_runner.h"
 #include "logger.h"
 
@@ -51,15 +52,28 @@ int main(int argc, char** argv) {
     ctx->Init();
     auto pv_manager = std::make_shared<bchtree::epics::ca::PVManager>(ctx);
 
-    bchtree::BTRunner runner(ctx, pv_manager);
+    bchtree::BTFactoryHost host;
+    host.registerBuiltinNodes(ctx, pv_manager);
+
+    const std::string treePath = result["tree"].as<std::string>();
+    host.registerTreeFromFile(treePath);
+    host.prepareOnce();
+
+    bchtree::BTRunner runner(host);
+
     runner.SetLogger(logger);
 
     if (console_level == "debug" || file_level == "debug") {
         runner.UseRunnerLogger();
     }
 
-    // Parse --set key=value pairs and pass them to BTRunner BEFORE
-    // RegisterTreeFromFile().
+    if (result["print-tree"].as<bool>()) {
+        runner.PrintTree();
+        return OK;
+    }
+
+    // Parse --set key=value pairs for global blackboard
+    bchtree::BTRunner::BBInitMap bb_map;
     if (result.count("set")) {
         const auto pairs = result["set"].as<std::vector<std::string>>();
         for (const auto& kv : pairs) {
@@ -73,21 +87,13 @@ int main(int argc, char** argv) {
             const std::string key = kv.substr(0, pos);
             const std::string val = kv.substr(pos + 1);
             // Note: keys are plain strings (e.g., "@head", "mode", etc.)
-            runner.SetGlobalBB(key, val);
+            bb_map.emplace(key, val);
         }
-    }
-
-    const std::string treePath = result["tree"].as<std::string>();
-    runner.RegisterTreeFromFile(treePath);
-
-    if (result["print-tree"].as<bool>()) {
-        runner.PrintTree();
-        return OK;
     }
 
     auto sleep_time_arg = result["sleep-time"].as<int>();
     auto sleep_time = std::chrono::milliseconds(sleep_time_arg);
-    bool success = runner.Run(sleep_time);
+    bool success = runner.Run("MainTree", bb_map, sleep_time);
     if (success) {
         return OK;
     }

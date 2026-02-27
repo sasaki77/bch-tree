@@ -8,7 +8,6 @@
 #include "epics/ca/ca_context_manager.h"
 #include "epics/ca/ca_pv_manager.h"
 #include "logger.h"
-
 namespace bchtree {
 
 class RunnerLogger : public BT::StatusChangeLogger {
@@ -31,34 +30,30 @@ class RunnerLogger : public BT::StatusChangeLogger {
     std::shared_ptr<Logger> logger_;
 };
 
+class BTFactoryHost;
+
 class BTRunner {
    public:
-    explicit BTRunner(std::shared_ptr<epics::ca::CAContextManager> ctx,
-                      std::shared_ptr<epics::ca::PVManager> pv_manager)
-        : ctx_(std::move(ctx)), pv_manager_(std::move(pv_manager)) {}
+    explicit BTRunner(BTFactoryHost& host) : host_(host) {}
 
-    bool Run(
-        std::chrono::milliseconds sleep_time = std::chrono::milliseconds(10));
-    void PrintTree();
+    using BBInitMap = std::unordered_map<std::string, std::string>;
+
+    bool Run(const std::string& tree_id, const BBInitMap& bb_map,
+             const std::chrono::milliseconds sleep_time =
+                 std::chrono::milliseconds(10));
+    void PrintTree(const std::string& tree_id = "MainTree");
     void SetLogger(std::shared_ptr<Logger> logger);
-    void SetGlobalBB(std::string key, std::string value);
     void UseRunnerLogger();
-    void RegisterTreeFromFile(const std::string& treePath);
 
    private:
+    static BT::Blackboard::Ptr MakeBlackboard(
+        const std::unordered_map<std::string, std::string>& bb_map);
+
     std::shared_ptr<Logger> logger_;
-    BT::BehaviorTreeFactory factory_;
-    BT::Tree tree_;
-    std::shared_ptr<BT::Blackboard> blackboard_;
+    BTFactoryHost& host_;
 
-    std::shared_ptr<epics::ca::CAContextManager> ctx_;
-    std::shared_ptr<epics::ca::PVManager> pv_manager_;
-
-    bool initialized_{false};
     bool use_runner_logger_{false};
     std::unique_ptr<RunnerLogger> runner_logger_;
-
-    std::unordered_map<std::string, std::string> globals_bb_map_;
 };
 
 }  // namespace bchtree

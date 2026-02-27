@@ -21,6 +21,7 @@ endif()
 
 add_library(bchtree
     src/bt_runner.cpp
+    src/bt_factory_host.cpp
     src/logger.cpp
     src/epics/ca/ca_pv.cpp
     src/epics/ca/ca_context_manager.cpp

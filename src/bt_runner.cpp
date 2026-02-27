@@ -7,34 +7,30 @@
 #include "actions/camonitor_node.h"
 #include "actions/caput_node.h"
 #include "actions/print_node.h"
+#include "bt_factory_host.h"
 
 namespace bchtree {
 
-void BTRunner::PrintTree() {
-    if (!initialized_) {
-        throw BT::RuntimeError("BTRunner: Runner is not initialized");
-    }
+void BTRunner::PrintTree(const std::string& tree_id) {
+    auto tree = host_.createTree(tree_id);
 
-    BT::printTreeRecursively(tree_.rootNode());
+    BT::printTreeRecursively(tree.rootNode());
 }
 
-bool BTRunner::Run(std::chrono::milliseconds sleep_time) {
-    if (!initialized_) {
-        if (logger_) {
-            logger_->info("BTRunner: Runner is not initialized");
-        }
-        return false;
+bool BTRunner::Run(const std::string& tree_id, const BBInitMap& bb_map,
+                   const std::chrono::milliseconds sleep_time) {
+    auto bb = MakeBlackboard(bb_map);
+    auto tree = host_.createTree(tree_id, bb);
+
+    if (use_runner_logger_) {
+        runner_logger_ = std::make_unique<RunnerLogger>(tree, logger_);
     }
 
     if (logger_) {
         logger_->info("Start Tree:");
     }
 
-    if (use_runner_logger_) {
-        runner_logger_ = std::make_unique<RunnerLogger>(tree_, logger_);
-    }
-
-    const BT::NodeStatus status = tree_.tickWhileRunning(sleep_time);
+    const BT::NodeStatus status = tree.tickWhileRunning(sleep_time);
 
     if (logger_) {
         logger_->info(std::string("End Tree: status=") + toStr(status));
@@ -45,47 +41,15 @@ bool BTRunner::Run(std::chrono::milliseconds sleep_time) {
 
 void BTRunner::SetLogger(std::shared_ptr<Logger> logger) { logger_ = logger; }
 
-void BTRunner::SetGlobalBB(std::string key, std::string value) {
-    globals_bb_map_[std::move(key)] = std::move(value);
-}
-
 void BTRunner::UseRunnerLogger() { use_runner_logger_ = true; }
 
-void BTRunner::RegisterTreeFromFile(const std::string& treePath) {
-    blackboard_ = BT::Blackboard::create();
-    for (const auto& [k, v] : globals_bb_map_) {
-        blackboard_->set(k, v);
+BT::Blackboard::Ptr BTRunner::MakeBlackboard(
+    const std::unordered_map<std::string, std::string>& bb_map) {
+    auto bb = BT::Blackboard::create();
+    for (const auto& [k, v] : bb_map) {
+        bb->set(k, v);
     }
-
-    factory_.registerNodeType<CAGetNode<epics::PVData>>("CAGet", ctx_,
-                                                        pv_manager_);
-    factory_.registerNodeType<CAGetNode<double>>("CAGetDouble", ctx_,
-                                                 pv_manager_);
-    factory_.registerNodeType<CAGetNode<int>>("CAGetInt", ctx_, pv_manager_);
-    factory_.registerNodeType<CAGetNode<std::string>>("CAGetString", ctx_,
-                                                      pv_manager_);
-
-    factory_.registerNodeType<CAPutNode<double>>("CAPutDouble", ctx_,
-                                                 pv_manager_);
-    factory_.registerNodeType<CAPutNode<int>>("CAPutInt", ctx_, pv_manager_);
-    factory_.registerNodeType<CAPutNode<std::string>>("CAPutString", ctx_,
-                                                      pv_manager_);
-
-    // factory_.registerNodeType<CAMonitorNode<epics::PVData>>("CAMonitor",
-    // ctx_, pv_manager_);
-    factory_.registerNodeType<CAMonitorNode<double>>("CAMonitorDouble", ctx_,
-                                                     pv_manager_);
-    factory_.registerNodeType<CAMonitorNode<int>>("CAMonitorInt", ctx_,
-                                                  pv_manager_);
-    factory_.registerNodeType<CAMonitorNode<std::string>>("CAMonitorString",
-                                                          ctx_, pv_manager_);
-
-    factory_.registerNodeType<PrintNode>("Print");
-
-    factory_.registerBehaviorTreeFromFile(treePath);
-    tree_ = factory_.createTree("MainTree", blackboard_);
-
-    initialized_ = true;
+    return bb;
 }
 
 RunnerLogger::RunnerLogger(const BT::Tree& tree, std::shared_ptr<Logger> logger)
