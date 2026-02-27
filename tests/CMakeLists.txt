@@ -3,6 +3,7 @@ find_package(GTest REQUIRED)
 set(TEST_SOURCES
     softioc_runner.cpp
     softioc_fixture.cpp
+    gtest_bt_factory_host.cpp
     utils/node_test_helper.cpp
     utils/helper_func.cpp
     actions/gtest_print_node.cpp
