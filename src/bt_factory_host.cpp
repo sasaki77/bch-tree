@@ -1,5 +1,7 @@
 #include "bt_factory_host.h"
 
+#include <behaviortree_cpp/xml_parsing.h>
+
 #include <stdexcept>
 
 #include "actions/caget_node.h"
@@ -62,6 +64,10 @@ void BTFactoryHost::prepareOnce() {
 
 std::vector<std::string> BTFactoryHost::registeredTreeIDs() const {
     return factory_.registeredBehaviorTrees();
+}
+
+std::string BTFactoryHost::writeTreeXSD() const {
+    return BT::writeTreeXSD(factory_);
 }
 
 BT::Tree BTFactoryHost::createTree(const std::string& tree_id,

@@ -44,6 +44,9 @@ class BTFactoryHost final {
     // Return registered tree IDs. Useful to validate expected IDs exist.
     std::vector<std::string> registeredTreeIDs() const;
 
+    // Generate XSD from the factory.
+    std::string writeTreeXSD() const;
+
     // Create a Tree instance from a registered ID and a blackboard.
     // This ensures the factory is prepared (prepareOnce) before instantiation.
     BT::Tree createTree(

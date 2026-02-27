@@ -23,6 +23,7 @@ int main(int argc, char** argv) {
       ("log-level-file", "(trace|debug|info|warn|error|critical|off)", cxxopts::value<std::string>()->default_value("info"))
       ("log-file", "log file path", cxxopts::value<std::string>()->default_value(""))
       ("print-tree", "print tree", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
+      ("output-xsd", "output the XSD", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
       ("s,set", "Set global blackboard entry (key=value). Repeatable.", cxxopts::value<std::vector<std::string>>()->default_value({}))
       ("sleep-time", "sleep time for tick in msec", cxxopts::value<int>()->default_value("10"))
       ("h,help", "print usage");
@@ -30,7 +31,7 @@ int main(int argc, char** argv) {
 
     auto result = options.parse(argc, argv);
 
-    if (result.count("help") || !result.count("tree")) {
+    if (result.count("help")) {
         std::cout << options.help() << std::endl;
         return USAGE_ERROR;
     }
@@ -55,6 +56,17 @@ int main(int argc, char** argv) {
 
     bchtree::BTFactoryHost host;
     host.registerBuiltinNodes(ctx, pv_manager);
+
+    if (result["output-xsd"].as<bool>()) {
+        std::string xsd = host.writeTreeXSD();
+        std::cout << xsd << std::endl;
+        return OK;
+    }
+
+    if (!result.count("tree")) {
+        std::cout << options.help() << std::endl;
+        return USAGE_ERROR;
+    }
 
     const std::string treePath = result["tree"].as<std::string>();
     host.registerTreeFromFile(treePath);
