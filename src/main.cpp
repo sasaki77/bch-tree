@@ -90,8 +90,10 @@ int main(int argc, char** argv) {
         runner.UseRunnerLogger();
     }
 
+    const std::string tree_id = result["tree-id"].as<std::string>();
+
     if (result["print-tree"].as<bool>()) {
-        runner.PrintTree();
+        runner.PrintTree(tree_id);
         return OK;
     }
 
@@ -113,8 +115,6 @@ int main(int argc, char** argv) {
             bb_map.emplace(key, val);
         }
     }
-
-    const std::string tree_id = result["tree-id"].as<std::string>();
 
     auto sleep_time_arg = result["sleep-time"].as<int>();
     auto sleep_time = std::chrono::milliseconds(sleep_time_arg);
