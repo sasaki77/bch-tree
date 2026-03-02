@@ -23,6 +23,7 @@ int main(int argc, char** argv) {
       ("log-level-file", "(trace|debug|info|warn|error|critical|off)", cxxopts::value<std::string>()->default_value("info"))
       ("log-file", "log file path", cxxopts::value<std::string>()->default_value(""))
       ("print-tree", "print tree", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
+      ("print-tree-ids", "print tree IDs", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
       ("output-xsd", "output the XSD", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
       ("s,set", "Set global blackboard entry (key=value). Repeatable.", cxxopts::value<std::vector<std::string>>()->default_value({}))
       ("sleep-time", "sleep time for tick in msec", cxxopts::value<int>()->default_value("10"))
@@ -71,6 +72,15 @@ int main(int argc, char** argv) {
     const std::string treePath = result["tree"].as<std::string>();
     host.registerTreeFromFile(treePath);
     host.prepareOnce();
+
+    if (result["print-tree-ids"].as<bool>()) {
+        std::vector<std::string> ids = host.registeredTreeIDs();
+        for (const auto& id : ids) {
+            std::cout << id << std::endl;
+        }
+
+        return OK;
+    }
 
     bchtree::BTRunner runner(host);
 
