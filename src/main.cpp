@@ -25,6 +25,7 @@ int main(int argc, char** argv) {
       ("print-tree", "print tree", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
       ("print-tree-ids", "print tree IDs", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
       ("output-xsd", "output the XSD", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
+      ("output-models", "output the tree nodes model xml", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
       ("s,set", "Set global blackboard entry (key=value). Repeatable.", cxxopts::value<std::vector<std::string>>()->default_value({}))
       ("sleep-time", "sleep time for tick in msec", cxxopts::value<int>()->default_value("10"))
       ("h,help", "print usage");
@@ -60,7 +61,13 @@ int main(int argc, char** argv) {
 
     if (result["output-xsd"].as<bool>()) {
         std::string xsd = host.writeTreeXSD();
-        std::cout << xsd << std::endl;
+        std::cout << xsd;
+        return OK;
+    }
+
+    if (result["output-models"].as<bool>()) {
+        std::string xml = host.writeTreeNodesModelXML();
+        std::cout << xml;
         return OK;
     }
 

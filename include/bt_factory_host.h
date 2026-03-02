@@ -47,6 +47,9 @@ class BTFactoryHost final {
     // Generate XSD from the factory.
     std::string writeTreeXSD() const;
 
+    // Generate TreeNodesModel from the factory for Groot2.
+    std::string writeTreeNodesModelXML() const;
+
     // Create a Tree instance from a registered ID and a blackboard.
     // This ensures the factory is prepared (prepareOnce) before instantiation.
     BT::Tree createTree(

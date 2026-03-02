@@ -70,6 +70,10 @@ std::string BTFactoryHost::writeTreeXSD() const {
     return BT::writeTreeXSD(factory_);
 }
 
+std::string BTFactoryHost::writeTreeNodesModelXML() const {
+    return BT::writeTreeNodesModelXML(factory_);
+}
+
 BT::Tree BTFactoryHost::createTree(const std::string& tree_id,
                                    const BT::Blackboard::Ptr& blackboard) {
     ensurePrepared_();
