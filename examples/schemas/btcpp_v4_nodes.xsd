@@ -199,22 +199,22 @@
     <xs:complexType name="CAMonitorDoubleType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
-        <xs:attribute name="queue_capacity" type="integerOrBlackboardType" use="required"/>
-        <xs:attribute name="initial_fire" type="booleanOrBlackboardType" use="required"/>
+        <xs:attribute name="queue_capacity" type="integerOrBlackboardType" default="60"/>
+        <xs:attribute name="initial_fire" type="booleanOrBlackboardType" default="true"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
     <xs:complexType name="CAMonitorIntType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
-        <xs:attribute name="queue_capacity" type="integerOrBlackboardType" use="required"/>
-        <xs:attribute name="initial_fire" type="booleanOrBlackboardType" use="required"/>
+        <xs:attribute name="queue_capacity" type="integerOrBlackboardType" default="60"/>
+        <xs:attribute name="initial_fire" type="booleanOrBlackboardType" default="true"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
     <xs:complexType name="CAMonitorStringType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
-        <xs:attribute name="queue_capacity" type="integerOrBlackboardType" use="required"/>
-        <xs:attribute name="initial_fire" type="booleanOrBlackboardType" use="required"/>
+        <xs:attribute name="queue_capacity" type="integerOrBlackboardType" default="60"/>
+        <xs:attribute name="initial_fire" type="booleanOrBlackboardType" default="true"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
     <xs:complexType name="CAPutDoubleType">

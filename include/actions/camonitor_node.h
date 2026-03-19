@@ -16,6 +16,7 @@ template <typename T>
 class CAMonitorNode : public BT::StatefulActionNode {
    public:
     static constexpr int kDefaultQueueCap = 60;  // bounded queue
+    static constexpr bool kDefaultInitFire = true;
 
     CAMonitorNode(const std::string& name, const BT::NodeConfig& cfg,
                   std::shared_ptr<epics::ca::CAContextManager> ctx,
@@ -29,9 +30,13 @@ class CAMonitorNode : public BT::StatefulActionNode {
     static BT::PortsList providedPorts() {
         using namespace BT;
         return {
-            InputPort<std::string>("pv"),
-            InputPort<bool>("initial_fire"),
-            InputPort<int>("queue_capacity"),
+            InputPort<std::string>("pv", "PV name"),
+            InputPort<bool>(
+                "initial_fire", kDefaultInitFire,
+                " If true, the node outputs the current PV value once at the "
+                "start, even if no monitor event has been received yet"),
+            InputPort<int>("queue_capacity", kDefaultQueueCap,
+                           "Maximum number of CA monitor events to buffer"),
             OutputPort<T>("result"),
         };
     }
@@ -173,7 +178,7 @@ class CAMonitorNode : public BT::StatefulActionNode {
 
     // Inputs
     std::string pv_name_;
-    bool initial_fire_{true};
+    bool initial_fire_{kDefaultInitFire};
     int queue_capacity_{kDefaultQueueCap};
 
     // State
