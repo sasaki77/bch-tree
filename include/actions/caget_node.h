@@ -11,6 +11,7 @@ template <typename T>
 class CAGetNode : public BT::StatefulActionNode {
    public:
     static constexpr int kDefaultTimeoutMs = 1000;
+    static constexpr int kDefaultUseMonitor = true;
 
     explicit CAGetNode(const std::string& name, const BT::NodeConfig& cfg,
                        std::shared_ptr<epics::ca::CAContextManager> ctx,
@@ -25,9 +26,13 @@ class CAGetNode : public BT::StatefulActionNode {
     static BT::PortsList providedPorts() {
         using namespace BT;
         return {
-            InputPort<std::string>("pv"),
-            InputPort<int>("timeout"),
-            InputPort<bool>("use_monitor"),
+            InputPort<std::string>("pv", "PV name"),
+            InputPort<int>("timeout", kDefaultTimeoutMs,
+                           "Timeout in milli seconds"),
+            InputPort<bool>(
+                "use_monitor", kDefaultUseMonitor,
+                "Set false to issue get request every time; otherwise, the "
+                "most recent value updated by the monitor will be used"),
             OutputPort<T>("result"),
         };
     }
@@ -161,7 +166,7 @@ class CAGetNode : public BT::StatefulActionNode {
     // Inputs (immutable during a single tick execution)
     std::string pv_name_;
     int timeout_ms_{kDefaultTimeoutMs};  // >= 0
-    bool use_monitor_{true};
+    bool use_monitor_{kDefaultUseMonitor};
 
     // Deadline for the current execution (set in onStart)
     std::chrono::steady_clock::time_point deadline_{};

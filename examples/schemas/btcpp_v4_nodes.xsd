@@ -178,22 +178,22 @@
     <xs:complexType name="CAGetDoubleType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
-        <xs:attribute name="use_monitor" type="booleanOrBlackboardType" use="required"/>
-        <xs:attribute name="timeout" type="integerOrBlackboardType" use="required"/>
+        <xs:attribute name="use_monitor" type="booleanOrBlackboardType" default="true"/>
+        <xs:attribute name="timeout" type="integerOrBlackboardType" default="1000"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
     <xs:complexType name="CAGetIntType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
-        <xs:attribute name="use_monitor" type="booleanOrBlackboardType" use="required"/>
-        <xs:attribute name="timeout" type="integerOrBlackboardType" use="required"/>
+        <xs:attribute name="use_monitor" type="booleanOrBlackboardType" default="true"/>
+        <xs:attribute name="timeout" type="integerOrBlackboardType" default="1000"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
     <xs:complexType name="CAGetStringType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
-        <xs:attribute name="use_monitor" type="booleanOrBlackboardType" use="required"/>
-        <xs:attribute name="timeout" type="integerOrBlackboardType" use="required"/>
+        <xs:attribute name="use_monitor" type="booleanOrBlackboardType" default="true"/>
+        <xs:attribute name="timeout" type="integerOrBlackboardType" default="1000"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
     <xs:complexType name="CAMonitorDoubleType">
@@ -448,4 +448,3 @@
         <xs:attributeGroup ref="commonAttributeGroup"/>
     </xs:complexType>
 </xs:schema>
-
