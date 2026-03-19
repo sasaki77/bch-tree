@@ -11,6 +11,7 @@ template <typename T>
 class CAPutNode : public BT::StatefulActionNode {
    public:
     static constexpr int kDefaultTimeoutMs = 1000;
+    static constexpr bool kDefaultForceWrite = false;
 
     explicit CAPutNode(const std::string& name, const BT::NodeConfig& cfg,
                        std::shared_ptr<epics::ca::CAContextManager> ctx,
@@ -25,10 +26,13 @@ class CAPutNode : public BT::StatefulActionNode {
     static BT::PortsList providedPorts() {
         using namespace BT;
         return {
-            InputPort<std::string>("pv"),
-            InputPort<T>("value"),
-            InputPort<int>("timeout"),
-            InputPort<bool>("force_write"),
+            InputPort<std::string>("pv", "PV name"),
+            InputPort<T>("value", "Value to write to the PV"),
+            InputPort<int>("timeout", kDefaultTimeoutMs,
+                           "Timeout in milli seconds"),
+            InputPort<bool>("force_write", kDefaultForceWrite,
+                            "If true, the value is always written even if it "
+                            "is the same as the last monitored value"),
         };
     }
 
@@ -142,7 +146,7 @@ class CAPutNode : public BT::StatefulActionNode {
     std::string pv_name_;
     int timeout_ms_{kDefaultTimeoutMs};  // >= 0
     T value_;
-    bool force_write_{false};
+    bool force_write_{kDefaultForceWrite};
 
     // Deadline for the current execution (set in onStart)
     std::chrono::steady_clock::time_point deadline_{};

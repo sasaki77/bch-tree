@@ -219,22 +219,22 @@
     </xs:complexType>
     <xs:complexType name="CAPutDoubleType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
-        <xs:attribute name="force_write" type="booleanOrBlackboardType" use="required"/>
-        <xs:attribute name="timeout" type="integerOrBlackboardType" use="required"/>
+        <xs:attribute name="force_write" type="booleanOrBlackboardType" default="false"/>
+        <xs:attribute name="timeout" type="integerOrBlackboardType" default="1000"/>
         <xs:attribute name="value" type="decimalOrBlackboardType" use="required"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
     <xs:complexType name="CAPutIntType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
-        <xs:attribute name="force_write" type="booleanOrBlackboardType" use="required"/>
-        <xs:attribute name="timeout" type="integerOrBlackboardType" use="required"/>
+        <xs:attribute name="force_write" type="booleanOrBlackboardType" default="false"/>
+        <xs:attribute name="timeout" type="integerOrBlackboardType" default="1000"/>
         <xs:attribute name="value" type="integerOrBlackboardType" use="required"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
     <xs:complexType name="CAPutStringType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
-        <xs:attribute name="force_write" type="booleanOrBlackboardType" use="required"/>
-        <xs:attribute name="timeout" type="integerOrBlackboardType" use="required"/>
+        <xs:attribute name="force_write" type="booleanOrBlackboardType" default="false"/>
+        <xs:attribute name="timeout" type="integerOrBlackboardType" default="1000"/>
         <xs:attribute name="value" type="stringOrBlackboardType" use="required"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
