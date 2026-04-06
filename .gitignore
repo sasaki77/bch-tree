@@ -37,5 +37,16 @@ CMakeUserPresets.json
 *.ninja
 .ninja_deps
 
-### Others ###
+# Virtual environments
+.env
+.envrc
+.venv
 env/
+venv/
+
+# Unit test
+.tox
+.pytest_cache/
+
+# Docs
+docs/_build

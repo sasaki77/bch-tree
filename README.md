@@ -100,6 +100,15 @@ You can run the entire test suite using `ctest`:
 ctest --test-dir build/debug --output-on-failure
 ```
 
+## Build documentation
+
+```bash
+python -m venv env
+source env/bin/activate
+pip install -r docs/requirements.txt
+sphinx-multiversion docs docs/_build/html
+```
+
 ## Project Status
 
 This project is under active development.
