@@ -15,7 +15,7 @@ It is built upon the [BehaviorTree.CPP](https://www.behaviortree.dev/) library.
 
 This project uses **vcpkg** for dependency management and **CMake** for the build system.
 
-### 1. Prerequisites
+### 1. Requirements
 Ensure you have the following installed:
 
 - C++ Compiler (supporting C++17 or later)
