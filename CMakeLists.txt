@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23)
-project(bch-tree LANGUAGES CXX)
+project(bch-tree VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -38,6 +38,17 @@ target_link_libraries(bchtree PUBLIC
 
 add_executable(bch-tree-cli src/main.cpp)
 target_link_libraries(bch-tree-cli PRIVATE bchtree cxxopts::cxxopts spdlog::spdlog)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/version.h
+    @ONLY
+)
+
+target_include_directories(bch-tree-cli
+    PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}/generated
+)
 
 include(CTest)
 message( STATUS "BUILD_TESTING:   ${BUILD_TESTING} " )

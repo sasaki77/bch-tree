@@ -5,6 +5,7 @@
 #include "bt_factory_host.h"
 #include "bt_runner.h"
 #include "logger.h"
+#include "version.h"
 
 enum ExitCode {
     OK = 0,            // Tree SUCCESS
@@ -28,6 +29,7 @@ int main(int argc, char** argv) {
       ("output-models", "output the tree nodes model xml", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
       ("s,set", "Set global blackboard entry (key=value). Repeatable.", cxxopts::value<std::vector<std::string>>()->default_value({}))
       ("sleep-time", "sleep time for tick in msec", cxxopts::value<int>()->default_value("10"))
+      ("v,version", "version")
       ("h,help", "print usage");
     // clang-format on
 
@@ -35,6 +37,11 @@ int main(int argc, char** argv) {
 
     if (result.count("help")) {
         std::cout << options.help() << std::endl;
+        return USAGE_ERROR;
+    }
+
+    if (result.count("version")) {
+        std::cout << "v" << BCHTREE_VERSION << std::endl;
         return USAGE_ERROR;
     }
 
