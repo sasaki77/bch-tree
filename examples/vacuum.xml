@@ -1,5 +1,7 @@
 <!-- Start IOC with db/vacuum.db before running the tree -->
-<root BTCPP_format="4">
+<root BTCPP_format="4"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="schemas/btcpp_v4_nodes.xsd">
   <BehaviorTree ID="MainTree">
     <Sequence>
       <Sequence name="Init Sequence">
