@@ -34,6 +34,7 @@ jobs:
       - name: Build Sphinx Documentation
         run: |
           sphinx-multiversion docs docs/_build/html
+          cp docs/ghp_assets/* docs/_build/html/
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
