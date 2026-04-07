@@ -52,3 +52,6 @@ html_context = {
 }
 
 github_doc_root = "https://github.com/sasaki77/bch-tree/main/doc/"
+
+smv_tag_whitelist = r"^\d+\.\d+.*$"
+smv_branch_whitelist = "main"
