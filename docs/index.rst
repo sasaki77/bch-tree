@@ -13,7 +13,7 @@ It is built upon the `BehaviorTree.CPP <https://www.behaviortree.dev/>`_ library
 
 Links
 -----
-* `Source(GitHub) <https://github.com/sasaki77/bch-tree>`_
+* `Source (GitHub) <https://github.com/sasaki77/bch-tree>`_
 
 Features
 --------
