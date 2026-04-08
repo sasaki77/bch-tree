@@ -18,12 +18,21 @@ template <typename T>
 using GetCallbackAs = std::function<void(T)>;
 
 template <typename T>
+using GetCallbackWithMetaAs = std::function<void(PVReadResult<T>)>;
+
+template <typename T>
 using MonitorCallbackAs = std::function<void(T)>;
 
 template <typename T>
 struct GetCBCtxAs {
     CAPV* self;
     GetCallbackAs<T> cb;
+};
+
+template <typename T>
+struct GetCBCtxWithMetaAs {
+    CAPV* self;
+    GetCallbackWithMetaAs<T> cb;
 };
 
 class CAPV {
@@ -46,6 +55,14 @@ class CAPV {
     }
 
     template <typename T>
+    PVReadResult<T> GetWithMetaAs() {
+        PVReadResult<T> result;
+        result.value = extract_as<T>(pvdata_);
+        result.meta = pvdata_.meta;
+        return result;
+    }
+
+    template <typename T>
     bool GetCBAs(GetCallbackAs<T> cb, const std::chrono::milliseconds timeout) {
         auto cb_ctx = std::make_unique<GetCBCtxAs<T>>();
         cb_ctx->self = this;
@@ -61,6 +78,30 @@ class CAPV {
         if (st != ECA_NORMAL) {
             // Reclaim ownership
             std::unique_ptr<GetCBCtxAs<T>> reclaim(raw);
+            return false;
+        }
+        ca_flush_io();
+
+        return true;
+    }
+
+    template <typename T>
+    bool GetCBWithMetaAs(GetCallbackWithMetaAs<T> cb,
+                         const std::chrono::milliseconds timeout) {
+        auto cb_ctx = std::make_unique<GetCBCtxWithMetaAs<T>>();
+        cb_ctx->self = this;
+        cb_ctx->cb = std::move(cb);
+
+        // Pass cb_ctx pointer to user
+        GetCBCtxWithMetaAs<T>* raw = cb_ctx.release();
+
+        const chtype dbr_type = PreferredGetType(native_type_);
+
+        int st = ca_array_get_callback(dbr_type, static_cast<unsigned long>(1),
+                                       chid_, &GetHandlerWithMetaAs<T>, raw);
+        if (st != ECA_NORMAL) {
+            // Reclaim ownership
+            std::unique_ptr<GetCBCtxWithMetaAs<T>> reclaim(raw);
             return false;
         }
         ca_flush_io();
@@ -119,6 +160,27 @@ class CAPV {
             // Convert to sample data
             cb_ctx->cb(extract_as<T>(sample));
         }
+    }
+
+    template <typename T>
+    static void GetHandlerWithMetaAs(struct event_handler_args args) {
+        std::unique_ptr<GetCBCtxWithMetaAs<T>> cb_ctx(
+            static_cast<GetCBCtxWithMetaAs<T>*>(args.usr));
+
+        if (!cb_ctx || !cb_ctx->self) return;
+
+        if (args.status != ECA_NORMAL) {
+            throw std::runtime_error(
+                "get callback is called without ECA_NORMAL status");
+        }
+        PVData sample = DecodePVScalar(args.type, args.dbr);
+        T v = extract_as<T>(sample);
+        PVReadResult<T> result;
+        result.value = v;
+        result.meta.severity = sample.meta.severity;
+        result.meta.status = sample.meta.status;
+
+        cb_ctx->cb(result);
     }
 
     template <typename T>

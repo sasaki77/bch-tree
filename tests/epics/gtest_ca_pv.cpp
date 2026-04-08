@@ -81,30 +81,40 @@ template <>
 struct PutInput<double> {
     static std::string pvname() { return "TEST:AO"; }
     static double value() { return 12.3; }
+    static uint32_t severity() { return 2; }
+    static uint32_t status() { return 3; }
 };
 // float
 template <>
 struct PutInput<float> {
     static std::string pvname() { return "TEST:AO"; }
     static float value() { return 6.25f; }
+    static uint32_t severity() { return 1; }
+    static uint32_t status() { return 4; }
 };
 // int32_t
 template <>
 struct PutInput<int32_t> {
     static std::string pvname() { return "TEST:LO"; }
     static int32_t value() { return 42; }
+    static uint32_t severity() { return 2; }
+    static uint32_t status() { return 3; }
 };
 // uint16_t
 template <>
 struct PutInput<uint16_t> {
     static std::string pvname() { return "TEST:LO"; }
     static uint16_t value() { return static_cast<uint16_t>(7); }
+    static uint32_t severity() { return 1; }
+    static uint32_t status() { return 4; }
 };
 // std::string
 template <>
 struct PutInput<std::string> {
     static std::string pvname() { return "TEST:STRO"; }
     static std::string value() { return std::string("Hello"); }
+    static uint32_t severity() { return 0; }
+    static uint32_t status() { return 0; }
 };
 
 template <typename T>
@@ -137,6 +147,14 @@ TYPED_TEST(PutCB_Typed, CAPV_PutCB_and_GetAs_GetCBAs) {
     T got = pv.GetAs<T>();
     EXPECT_EQ(got, value);
 
+    // ---- Get Value with GetWithMetaAs ----
+    uint32_t severity = PutInput<T>::severity();
+    uint32_t status = PutInput<T>::status();
+    bchtree::epics::PVReadResult<T> got_meta = pv.GetWithMetaAs<T>();
+    EXPECT_EQ(got_meta.value, value);
+    EXPECT_EQ(got_meta.meta.severity, severity);
+    EXPECT_EQ(got_meta.meta.status, status);
+
     // ---- Get Value with GetCBAs ----
     T got_cb_value;
     std::promise<void> got_cb;
@@ -152,6 +170,24 @@ TYPED_TEST(PutCB_Typed, CAPV_PutCB_and_GetAs_GetCBAs) {
         << "No get callback event";
 
     EXPECT_EQ(got_cb_value, value);
+
+    // ---- Get Value with GetCBWithMetaAs ----
+    bchtree::epics::PVReadResult<T> got_cb_meta_result;
+    std::promise<void> got_cb_meta;
+
+    pv.GetCBWithMetaAs<T>(
+        [&](bchtree::epics::PVReadResult<T> result) {
+            got_cb_meta_result = result;
+            got_cb_meta.set_value();
+        },
+        std::chrono::milliseconds(1000));
+
+    ASSERT_EQ(got_cb_meta.get_future().wait_for(4s), std::future_status::ready)
+        << "No get callback event";
+
+    EXPECT_EQ(got_cb_meta_result.value, value);
+    EXPECT_EQ(got_cb_meta_result.meta.severity, severity);
+    EXPECT_EQ(got_cb_meta_result.meta.status, status);
 }
 
 TEST_F(SoftIocFixture, CAPV_Disconnect_Reconnect) {

@@ -34,6 +34,8 @@ class CAGetNode : public BT::StatefulActionNode {
                 "Set false to issue get request every time; otherwise, the "
                 "most recent value updated by the monitor will be used"),
             OutputPort<T>("result"),
+            OutputPort<int>("status"),
+            OutputPort<int>("severity"),
         };
     }
 
@@ -49,7 +51,7 @@ class CAGetNode : public BT::StatefulActionNode {
         BT::TreeNode::getInput("timeout", timeout_ms_);
         BT::TreeNode::getInput("use_monitor", use_monitor_);
 
-        promise_ = std::promise<T>();
+        promise_ = std::promise<bchtree::epics::PVReadResult<T>>();
         future_ = promise_.get_future();
 
         deadline_ = std::chrono::steady_clock::now() +
@@ -70,15 +72,16 @@ class CAGetNode : public BT::StatefulActionNode {
 
         // Use monitor value
         if (use_monitor_) {
-            T sample = pv_->GetAs<T>();
-            setOutput("result", sample);
+            updateFromMonitor();
             return BT::NodeStatus::SUCCESS;
         }
 
         // Issue getCB
-        bool status =
-            pv_->GetCBAs<T>([this](T sample) { handleGetResult(sample); },
-                            std::chrono::milliseconds(timeout_ms_));
+        bool status = pv_->GetCBWithMetaAs<T>(
+            [this](bchtree::epics::PVReadResult<T> sample) {
+                handleGetResult(sample);
+            },
+            std::chrono::milliseconds(timeout_ms_));
         if (!status) {
             throw BT::RuntimeError("CAGetNode: failed to call getCB");
         }
@@ -89,16 +92,17 @@ class CAGetNode : public BT::StatefulActionNode {
 
     BT::NodeStatus onRunning() override {
         if (use_monitor_ && connected_) {
-            T sample = pv_->GetAs<T>();
-            setOutput("result", sample);
+            updateFromMonitor();
             return BT::NodeStatus::SUCCESS;
         }
 
         if (!requested_ && connected_) {
-            // Issue get
-            bool status =
-                pv_->GetCBAs<T>([this](T sample) { handleGetResult(sample); },
-                                std::chrono::milliseconds(timeout_ms_));
+            // Issue getCB
+            bool status = pv_->GetCBWithMetaAs<T>(
+                [this](bchtree::epics::PVReadResult<T> sample) {
+                    handleGetResult(sample);
+                },
+                std::chrono::milliseconds(timeout_ms_));
             if (!status) {
                 throw BT::RuntimeError("CAGetNode: failed to call getCB");
             }
@@ -108,8 +112,10 @@ class CAGetNode : public BT::StatefulActionNode {
         // Check condition
         if (done_) {
             try {
-                auto samp = future_.get();
-                setOutput("result", samp);
+                auto sample = future_.get();
+                setOutput("result", sample.value);
+                setOutput("severity", static_cast<int>(sample.meta.severity));
+                setOutput("status", static_cast<int>(sample.meta.status));
                 return BT::NodeStatus::SUCCESS;
             } catch (...) {
                 return BT::NodeStatus::FAILURE;
@@ -135,17 +141,24 @@ class CAGetNode : public BT::StatefulActionNode {
     CAGetNode& operator=(CAGetNode&&) noexcept = default;
 
    private:
-    void handleGetResult(T sample) {
+    void handleGetResult(bchtree::epics::PVReadResult<T> result) {
         if (cancelled_) {
             return;
         }
 
-        promise_.set_value(sample);
+        promise_.set_value(result);
         done_ = true;
         emitWakeUpSignal();
     }
 
     void handleConnection(bool connected) { connected_ = connected; }
+
+    void updateFromMonitor() {
+        bchtree::epics::PVReadResult<T> sample = pv_->GetWithMetaAs<T>();
+        setOutput("result", sample.value);
+        setOutput("severity", static_cast<int>(sample.meta.severity));
+        setOutput("status", static_cast<int>(sample.meta.status));
+    }
 
     // EPICS CA PV handle
     std::shared_ptr<epics::ca::CAPV> pv_;
@@ -160,8 +173,8 @@ class CAGetNode : public BT::StatefulActionNode {
 
     // Result delivery: promise/future shared to allow repeated polls in
     // onRunning()
-    std::promise<T> promise_;
-    std::shared_future<T> future_;
+    std::promise<bchtree::epics::PVReadResult<T>> promise_;
+    std::shared_future<bchtree::epics::PVReadResult<T>> future_;
 
     // Inputs (immutable during a single tick execution)
     std::string pv_name_;

@@ -208,31 +208,43 @@ PVData CAPV::DecodePVScalar(chtype type, const void* dbr) {
         case DBR_TIME_STRING: {
             auto v = static_cast<const dbr_time_string*>(dbr);
             data.value = bchtree::epics::PVScalarValue{v->value};
+            data.meta.severity = v->severity;
+            data.meta.status = v->status;
             break;
         }
         case DBR_TIME_DOUBLE: {
             auto v = static_cast<const dbr_time_double*>(dbr);
             data.value = bchtree::epics::PVScalarValue{v->value};
+            data.meta.severity = v->severity;
+            data.meta.status = v->status;
             break;
         }
         case DBR_TIME_FLOAT: {
             auto v = static_cast<const dbr_time_float*>(dbr);
             data.value = bchtree::epics::PVScalarValue{v->value};
+            data.meta.severity = v->severity;
+            data.meta.status = v->status;
             break;
         }
         case DBR_TIME_LONG: {
             auto v = static_cast<const dbr_time_long*>(dbr);
             data.value = bchtree::epics::PVScalarValue{v->value};
+            data.meta.severity = v->severity;
+            data.meta.status = v->status;
             break;
         }
         case DBR_TIME_INT: {
             auto v = static_cast<const dbr_time_short*>(dbr);
             data.value = bchtree::epics::PVScalarValue{v->value};
+            data.meta.severity = v->severity;
+            data.meta.status = v->status;
             break;
         }
         case DBR_TIME_ENUM: {
             auto v = static_cast<const dbr_time_enum*>(dbr);
             data.value = bchtree::epics::PVScalarValue{v->value};
+            data.meta.severity = v->severity;
+            data.meta.status = v->status;
             break;
         }
         default: {

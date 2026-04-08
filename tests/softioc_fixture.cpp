@@ -20,10 +20,18 @@ void SoftIocFixture::SetUpTestSuite() {
             record(ao, "TEST:AO") {
                 field(VAL,  "0")
                 field(PINI, "YES")
+                field(HIGH, "5")
+                field(HIHI, "9")
+                field(HSV,  "MINOR")
+                field(HHSV, "MAJOR")
             }
             record(longout, "TEST:LO") {
                 field(VAL,  "0")
                 field(PINI, "YES")
+                field(HIGH, "5")
+                field(HIHI, "9")
+                field(HSV,  "MINOR")
+                field(HHSV, "MAJOR")
             }
             record(stringout, "TEST:STRO") {
                 field(VAL,  "")

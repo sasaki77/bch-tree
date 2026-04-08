@@ -38,4 +38,10 @@ struct PVData {
     size_t count = 0;
 };
 
+template <typename T>
+struct PVReadResult {
+    T value;
+    PVMeta meta;
+};
+
 }  // namespace bchtree::epics
