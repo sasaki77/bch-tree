@@ -21,6 +21,8 @@ These Action nodes retrieve the current value from an EPICS PV and store it in t
     | `timeout`     | `InputPort<int>`    | `1000`  | Timeout in milliseconds for connection and get operation.                                                                            |
     | `use_monitor` | `InputPort<bool>`   | `true`  | If `true`, the most recent value updated by the CA monitor is used. If `false`, an explicit get request is issued on each execution. |
     | `result`      | `OutputPort<T>`     | -       | Value read from the PV. The output type depends on the type of variant.                                                              |
+    | `severity`    | `OutputPort<int>`   | -       | EPICS alarm severity. Indicates the alarm level of the PV (e.g. **NO\_ALARM**, **MINOR**, **MAJOR**, **INVALID**).                   |
+    | `status`      | `OutputPort<int>`   | -       | EPICS alarm status. Indicates the cause of the alarm (e.g. **HIHI**, **LOLO**, **LINK**, **UDF**, etc.).                             |
 
 ### CAPut Nodes
 These Action nodes write values to a specified EPICS PV.
@@ -46,6 +48,8 @@ These nodes monitor an EPICS PV and automatically update the blackboard whenever
     | `initial_fire`   | `InputPort<bool>`   | `true`  | If `true`, the node outputs the current PV value once at startup, even before any monitor event is received.                                  |
     | `queue_capacity` | `InputPort<int>`    | `60`    | Maximum number of CA monitor events to buffer internally. When the queue is full, the oldest samples are dropped.                             |
     | `result`         | `OutputPort<T>`     | -       | Value received from the EPICS CA monitor. One queued sample is published per successful tick (FIFO). The type depends on the type of variant. |
+    | `severity`       | `OutputPort<int>`   | -       | EPICS alarm severity. Indicates the alarm level of the PV (e.g. **NO\_ALARM**, **MINOR**, **MAJOR**, **INVALID**).                            |
+    | `status`         | `OutputPort<int>`   | -       | EPICS alarm status. Indicates the cause of the alarm (e.g. **HIHI**, **LOLO**, **LINK**, **UDF**, etc.).                                      |
 
 ## Utility Nodes
 
