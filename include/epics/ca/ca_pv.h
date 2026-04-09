@@ -65,16 +65,14 @@ class CAPV {
     }
 
     template <typename T>
-    bool GetCBAs(GetCallbackAs<T> cb, const std::chrono::milliseconds timeout) {
-        return GetCBCommon<GetCBCtxAs<T>>(std::move(cb), &GetHandlerAs<T>,
-                                          timeout);
+    bool GetCBAs(GetCallbackAs<T> cb) {
+        return GetCBCommon<GetCBCtxAs<T>>(std::move(cb), &GetHandlerAs<T>);
     }
 
     template <typename T>
-    bool GetCBWithMetaAs(GetCallbackWithMetaAs<T> cb,
-                         const std::chrono::milliseconds timeout) {
-        return GetCBCommon<GetCBCtxWithMetaAs<T>>(
-            std::move(cb), &GetHandlerWithMetaAs<T>, timeout);
+    bool GetCBWithMetaAs(GetCallbackWithMetaAs<T> cb) {
+        return GetCBCommon<GetCBCtxWithMetaAs<T>>(std::move(cb),
+                                                  &GetHandlerWithMetaAs<T>);
     }
 
     bool PutCB(const PVScalarValue& v, PutCallback cb);
@@ -109,11 +107,16 @@ class CAPV {
     void ClearMonitor(void);
 
     template <typename Ctx, typename Handler, typename Callback>
-    bool GetCBCommon(Callback&& cb, Handler handler,
-                     const std::chrono::milliseconds /*timeout*/) {
+    bool GetCBCommon(Callback&& cb, Handler handler) {
         auto cb_ctx = std::make_unique<Ctx>();
         cb_ctx->self = this;
         cb_ctx->cb = std::forward<Callback>(cb);
+
+        // NOTE:
+        // Ownership of Ctx is transferred to the Channel Access callback
+        // system. This assumes that the callback is guaranteed to be invoked
+        // exactly once by the EPICS CA library. If the callback is never
+        // invoked, the context object will be leaked.
 
         // Transfer ownership to CA callback
         Ctx* raw = cb_ctx.release();
@@ -143,11 +146,10 @@ class CAPV {
         }
 
         if (args.status != ECA_NORMAL) {
-            throw std::runtime_error(
-                "get callback is called without ECA_NORMAL status");
+            return;
         }
 
-        PVData sample = DecodePVScalar(args.type, args.dbr);
+        const PVData sample = DecodePVScalar(args.type, args.dbr);
         auto result = make_result(sample);
 
         cb_ctx->cb(std::move(result));
@@ -170,7 +172,7 @@ class CAPV {
             args, [](const PVData& sample) -> PVReadResult<T> {
                 PVReadResult<T> r;
                 r.value = extract_as<T>(sample);
-                r.meta = sample.meta;  // copy or reference, design choice
+                r.meta = sample.meta;
                 return r;
             });
     }

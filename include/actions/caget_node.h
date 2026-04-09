@@ -80,8 +80,7 @@ class CAGetNode : public BT::StatefulActionNode {
         bool status = pv_->GetCBWithMetaAs<T>(
             [this](bchtree::epics::PVReadResult<T> sample) {
                 handleGetResult(sample);
-            },
-            std::chrono::milliseconds(timeout_ms_));
+            });
         if (!status) {
             throw BT::RuntimeError("CAGetNode: failed to call getCB");
         }
@@ -101,8 +100,7 @@ class CAGetNode : public BT::StatefulActionNode {
             bool status = pv_->GetCBWithMetaAs<T>(
                 [this](bchtree::epics::PVReadResult<T> sample) {
                     handleGetResult(sample);
-                },
-                std::chrono::milliseconds(timeout_ms_));
+                });
             if (!status) {
                 throw BT::RuntimeError("CAGetNode: failed to call getCB");
             }

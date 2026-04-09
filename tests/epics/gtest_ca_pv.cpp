@@ -159,12 +159,10 @@ TYPED_TEST(PutCB_Typed, CAPV_PutCB_and_GetAs_GetCBAs) {
     T got_cb_value;
     std::promise<void> got_cb;
 
-    pv.GetCBAs<T>(
-        [&](T value) {
-            got_cb_value = value;
-            got_cb.set_value();
-        },
-        std::chrono::milliseconds(1000));
+    pv.GetCBAs<T>([&](T value) {
+        got_cb_value = value;
+        got_cb.set_value();
+    });
 
     ASSERT_EQ(got_cb.get_future().wait_for(4s), std::future_status::ready)
         << "No get callback event";
@@ -175,12 +173,10 @@ TYPED_TEST(PutCB_Typed, CAPV_PutCB_and_GetAs_GetCBAs) {
     bchtree::epics::PVReadResult<T> got_cb_meta_result;
     std::promise<void> got_cb_meta;
 
-    pv.GetCBWithMetaAs<T>(
-        [&](bchtree::epics::PVReadResult<T> result) {
-            got_cb_meta_result = result;
-            got_cb_meta.set_value();
-        },
-        std::chrono::milliseconds(1000));
+    pv.GetCBWithMetaAs<T>([&](bchtree::epics::PVReadResult<T> result) {
+        got_cb_meta_result = result;
+        got_cb_meta.set_value();
+    });
 
     ASSERT_EQ(got_cb_meta.get_future().wait_for(4s), std::future_status::ready)
         << "No get callback event";
