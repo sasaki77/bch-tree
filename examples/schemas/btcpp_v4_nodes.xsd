@@ -177,6 +177,8 @@
     </xs:complexType>
     <xs:complexType name="CAGetDoubleType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
+        <xs:attribute name="severity" type="blackboardType" use="required"/>
+        <xs:attribute name="status" type="blackboardType" use="required"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
         <xs:attribute name="use_monitor" type="booleanOrBlackboardType" default="true"/>
         <xs:attribute name="timeout" type="integerOrBlackboardType" default="1000"/>
@@ -184,6 +186,8 @@
     </xs:complexType>
     <xs:complexType name="CAGetIntType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
+        <xs:attribute name="severity" type="blackboardType" use="required"/>
+        <xs:attribute name="status" type="blackboardType" use="required"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
         <xs:attribute name="use_monitor" type="booleanOrBlackboardType" default="true"/>
         <xs:attribute name="timeout" type="integerOrBlackboardType" default="1000"/>
@@ -191,6 +195,8 @@
     </xs:complexType>
     <xs:complexType name="CAGetStringType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
+        <xs:attribute name="severity" type="blackboardType" use="required"/>
+        <xs:attribute name="status" type="blackboardType" use="required"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
         <xs:attribute name="use_monitor" type="booleanOrBlackboardType" default="true"/>
         <xs:attribute name="timeout" type="integerOrBlackboardType" default="1000"/>
@@ -198,21 +204,27 @@
     </xs:complexType>
     <xs:complexType name="CAMonitorDoubleType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
+        <xs:attribute name="status" type="blackboardType" use="required"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
+        <xs:attribute name="severity" type="blackboardType" use="required"/>
         <xs:attribute name="queue_capacity" type="integerOrBlackboardType" default="60"/>
         <xs:attribute name="initial_fire" type="booleanOrBlackboardType" default="true"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
     <xs:complexType name="CAMonitorIntType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
+        <xs:attribute name="status" type="blackboardType" use="required"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
+        <xs:attribute name="severity" type="blackboardType" use="required"/>
         <xs:attribute name="queue_capacity" type="integerOrBlackboardType" default="60"/>
         <xs:attribute name="initial_fire" type="booleanOrBlackboardType" default="true"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
     </xs:complexType>
     <xs:complexType name="CAMonitorStringType">
         <xs:attributeGroup ref="commonAttributeGroup"/>
+        <xs:attribute name="status" type="blackboardType" use="required"/>
         <xs:attribute name="result" type="blackboardType" use="required"/>
+        <xs:attribute name="severity" type="blackboardType" use="required"/>
         <xs:attribute name="queue_capacity" type="integerOrBlackboardType" default="60"/>
         <xs:attribute name="initial_fire" type="booleanOrBlackboardType" default="true"/>
         <xs:attribute name="pv" type="stringOrBlackboardType" use="required"/>
