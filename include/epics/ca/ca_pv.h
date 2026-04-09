@@ -64,49 +64,15 @@ class CAPV {
 
     template <typename T>
     bool GetCBAs(GetCallbackAs<T> cb, const std::chrono::milliseconds timeout) {
-        auto cb_ctx = std::make_unique<GetCBCtxAs<T>>();
-        cb_ctx->self = this;
-        cb_ctx->cb = std::move(cb);
-
-        // Pass cb_ctx pointer to user
-        GetCBCtxAs<T>* raw = cb_ctx.release();
-
-        const chtype dbr_type = PreferredGetType(native_type_);
-
-        int st = ca_array_get_callback(dbr_type, static_cast<unsigned long>(1),
-                                       chid_, &GetHandlerAs<T>, raw);
-        if (st != ECA_NORMAL) {
-            // Reclaim ownership
-            std::unique_ptr<GetCBCtxAs<T>> reclaim(raw);
-            return false;
-        }
-        ca_flush_io();
-
-        return true;
+        return GetCBCommon<GetCBCtxAs<T>>(std::move(cb), &GetHandlerAs<T>,
+                                          timeout);
     }
 
     template <typename T>
     bool GetCBWithMetaAs(GetCallbackWithMetaAs<T> cb,
                          const std::chrono::milliseconds timeout) {
-        auto cb_ctx = std::make_unique<GetCBCtxWithMetaAs<T>>();
-        cb_ctx->self = this;
-        cb_ctx->cb = std::move(cb);
-
-        // Pass cb_ctx pointer to user
-        GetCBCtxWithMetaAs<T>* raw = cb_ctx.release();
-
-        const chtype dbr_type = PreferredGetType(native_type_);
-
-        int st = ca_array_get_callback(dbr_type, static_cast<unsigned long>(1),
-                                       chid_, &GetHandlerWithMetaAs<T>, raw);
-        if (st != ECA_NORMAL) {
-            // Reclaim ownership
-            std::unique_ptr<GetCBCtxWithMetaAs<T>> reclaim(raw);
-            return false;
-        }
-        ca_flush_io();
-
-        return true;
+        return GetCBCommon<GetCBCtxWithMetaAs<T>>(
+            std::move(cb), &GetHandlerWithMetaAs<T>, timeout);
     }
 
     bool PutCB(const PVScalarValue& v, PutCallback cb);
@@ -140,47 +106,71 @@ class CAPV {
     void EnsureStartMonitor(void);
     void ClearMonitor(void);
 
-    template <typename T>
-    static void GetHandlerAs(struct event_handler_args args) {
-        std::unique_ptr<GetCBCtxAs<T>> cb_ctx(
-            static_cast<GetCBCtxAs<T>*>(args.usr));
+    template <typename Ctx, typename Handler, typename Callback>
+    bool GetCBCommon(Callback&& cb, Handler handler,
+                     const std::chrono::milliseconds /*timeout*/) {
+        auto cb_ctx = std::make_unique<Ctx>();
+        cb_ctx->self = this;
+        cb_ctx->cb = std::forward<Callback>(cb);
 
-        if (!cb_ctx || !cb_ctx->self) return;
+        // Transfer ownership to CA callback
+        Ctx* raw = cb_ctx.release();
+
+        const chtype dbr_type = PreferredGetType(native_type_);
+
+        int st = ca_array_get_callback(dbr_type, static_cast<unsigned long>(1),
+                                       chid_, handler, raw);
+
+        if (st != ECA_NORMAL) {
+            // Roll back ownership on failure
+            std::unique_ptr<Ctx> reclaim(raw);
+            return false;
+        }
+
+        ca_flush_io();
+        return true;
+    }
+
+    template <typename Ctx, typename MakeResult>
+    static void GetHandlerCommon(struct event_handler_args args,
+                                 MakeResult&& make_result) {
+        std::unique_ptr<Ctx> cb_ctx(static_cast<Ctx*>(args.usr));
+
+        if (!cb_ctx || !cb_ctx->self) {
+            return;
+        }
 
         if (args.status != ECA_NORMAL) {
             throw std::runtime_error(
                 "get callback is called without ECA_NORMAL status");
         }
-        PVData sample = DecodePVScalar(args.type, args.dbr);
 
-        if constexpr (std::is_same_v<T, PVData>) {
-            // Don't need convert
-            cb_ctx->cb(sample);
-        } else {
-            // Convert to sample data
-            cb_ctx->cb(extract_as<T>(sample));
-        }
+        PVData sample = DecodePVScalar(args.type, args.dbr);
+        auto result = make_result(sample);
+
+        cb_ctx->cb(std::move(result));
+    }
+
+    template <typename T>
+    static void GetHandlerAs(struct event_handler_args args) {
+        GetHandlerCommon<GetCBCtxAs<T>>(args, [](const PVData& sample) -> T {
+            if constexpr (std::is_same_v<T, PVData>) {
+                return sample;
+            } else {
+                return extract_as<T>(sample);
+            }
+        });
     }
 
     template <typename T>
     static void GetHandlerWithMetaAs(struct event_handler_args args) {
-        std::unique_ptr<GetCBCtxWithMetaAs<T>> cb_ctx(
-            static_cast<GetCBCtxWithMetaAs<T>*>(args.usr));
-
-        if (!cb_ctx || !cb_ctx->self) return;
-
-        if (args.status != ECA_NORMAL) {
-            throw std::runtime_error(
-                "get callback is called without ECA_NORMAL status");
-        }
-        PVData sample = DecodePVScalar(args.type, args.dbr);
-        T v = extract_as<T>(sample);
-        PVReadResult<T> result;
-        result.value = v;
-        result.meta.severity = sample.meta.severity;
-        result.meta.status = sample.meta.status;
-
-        cb_ctx->cb(result);
+        GetHandlerCommon<GetCBCtxWithMetaAs<T>>(
+            args, [](const PVData& sample) -> PVReadResult<T> {
+                PVReadResult<T> r;
+                r.value = extract_as<T>(sample);
+                r.meta = sample.meta;  // copy or reference, design choice
+                return r;
+            });
     }
 
     template <typename T>
