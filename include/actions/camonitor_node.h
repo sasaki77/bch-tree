@@ -38,6 +38,8 @@ class CAMonitorNode : public BT::StatefulActionNode {
             InputPort<int>("queue_capacity", kDefaultQueueCap,
                            "Maximum number of CA monitor events to buffer"),
             OutputPort<T>("result"),
+            OutputPort<int>("severity"),
+            OutputPort<int>("status"),
         };
     }
 
@@ -60,8 +62,10 @@ class CAMonitorNode : public BT::StatefulActionNode {
         connected_.store(pv_->IsConnected());
 
         if (!monitor_cb_registered_) {
-            pv_->AddMonitorCBAs<T>(
-                [this](T sample) { handleValueEnqueue(std::move(sample)); });
+            pv_->AddMonitorCBWithMetaAs<T>(
+                [this](bchtree::epics::PVReadResult<T> sample) {
+                    handleValueEnqueue(std::move(sample));
+                });
             monitor_cb_registered_ = true;
         }
 
@@ -97,7 +101,7 @@ class CAMonitorNode : public BT::StatefulActionNode {
     }
 
     BT::NodeStatus onRunning() override {
-        T out{};
+        bchtree::epics::PVReadResult<T> out{};
 
         {
             std::lock_guard<std::mutex> lk(mtx_);
@@ -108,7 +112,9 @@ class CAMonitorNode : public BT::StatefulActionNode {
             queue_.pop_front();
         }
 
-        setOutput("result", out);
+        setOutput("result", out.value);
+        setOutput("severity", static_cast<int>(out.meta.severity));
+        setOutput("status", static_cast<int>(out.meta.status));
         return BT::NodeStatus::SUCCESS;
     }
 
@@ -145,7 +151,7 @@ class CAMonitorNode : public BT::StatefulActionNode {
         }
     }
 
-    void handleValueEnqueue(T sample) {
+    void handleValueEnqueue(bchtree::epics::PVReadResult<T> sample) {
         if (cancelled_) return;
         {
             std::lock_guard<std::mutex> lk(mtx_);
@@ -161,7 +167,7 @@ class CAMonitorNode : public BT::StatefulActionNode {
         emitWakeUpSignal();  // wake the tree for prompt delivery
     }
 
-    void enqueueUnlocked_(T sample) {
+    void enqueueUnlocked_(bchtree::epics::PVReadResult<T> sample) {
         // Keep queue bounded; drop oldest to preserve latest real-time values
         if (queue_.size() >= static_cast<size_t>(queue_capacity_)) {
             queue_.pop_front();
@@ -195,7 +201,7 @@ class CAMonitorNode : public BT::StatefulActionNode {
 
     // Queue and timing
     std::mutex mtx_;
-    std::deque<T> queue_;
+    std::deque<bchtree::epics::PVReadResult<T>> queue_;
     size_t dropped_oldest_{0};
 };
 

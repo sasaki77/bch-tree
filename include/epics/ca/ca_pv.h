@@ -24,6 +24,9 @@ template <typename T>
 using MonitorCallbackAs = std::function<void(T)>;
 
 template <typename T>
+using MonitorCallbackWithMetaAs = std::function<void(PVReadResult<T>)>;
+
+template <typename T>
 struct GetCBCtxAs {
     CAPV* self;
     GetCallbackAs<T> cb;
@@ -81,18 +84,24 @@ class CAPV {
 
     template <typename T>
     void AddMonitorCBAs(MonitorCallbackAs<T> cb) {
-        {
-            std::lock_guard<std::mutex> g(mtx_);
-            auto typed_cb = [fn = std::move(cb)](const PVData& d) {
-                if constexpr (std::is_same_v<T, PVData>) {
-                    fn(d);
-                } else {
-                    fn(extract_as<T>(d));
-                }
-            };
-            typed_cbs_.emplace_back(typed_cb);
-        }
-        EnsureStartMonitor();
+        AddMonitorCBCommon(std::move(cb), [](const PVData& d) -> T {
+            if constexpr (std::is_same_v<T, PVData>) {
+                return d;
+            } else {
+                return extract_as<T>(d);
+            }
+        });
+    }
+
+    template <typename T>
+    void AddMonitorCBWithMetaAs(MonitorCallbackWithMetaAs<T> cb) {
+        AddMonitorCBCommon(std::move(cb),
+                           [](const PVData& d) -> PVReadResult<T> {
+                               PVReadResult<T> r;
+                               r.value = extract_as<T>(d);
+                               r.meta = d.meta;
+                               return r;
+                           });
     }
 
     std::string GetPVname() const;
@@ -175,6 +184,19 @@ class CAPV {
                 r.meta = sample.meta;
                 return r;
             });
+    }
+
+    template <typename Callback, typename MakeResult>
+    void AddMonitorCBCommon(Callback&& cb, MakeResult&& make_result) {
+        {
+            std::lock_guard<std::mutex> g(mtx_);
+            auto typed_cb = [fn = std::forward<Callback>(cb),
+                             make = std::forward<MakeResult>(make_result)](
+                                const PVData& d) mutable { fn(make(d)); };
+
+            typed_cbs_.emplace_back(std::move(typed_cb));
+        }
+        EnsureStartMonitor();
     }
 
     template <typename T>

@@ -227,12 +227,24 @@ TEST_F(SoftIocFixture, Monitor_AO_AsDouble) {
     std::vector<double> received;
     pv.AddMonitorCBAs<double>([&received](double v) { received.push_back(v); });
 
+    std::vector<bchtree::epics::PVReadResult<double>> received_meta;
+    pv.AddMonitorCBWithMetaAs<double>(
+        [&received_meta](bchtree::epics::PVReadResult<double>(v)) {
+            received_meta.push_back(v);
+        });
+
     pv.Put(1.23);
     pv.Put(4.56);
     pv.Put(7.89);
 
     EXPECT_EQ(received.size(), 3);
     EXPECT_NEAR(received.back(), 7.89, 1e-9);
+
+    EXPECT_EQ(received_meta.size(), 3);
+    bchtree::epics::PVReadResult<double> meta_last = received_meta.back();
+    EXPECT_NEAR(meta_last.value, 7.89, 1e-9);
+    EXPECT_EQ(meta_last.meta.severity, 1);
+    EXPECT_EQ(meta_last.meta.status, 4);
 }
 
 TEST_F(SoftIocFixture, Monitor_LO_AsInt32) {
@@ -244,11 +256,23 @@ TEST_F(SoftIocFixture, Monitor_LO_AsInt32) {
     std::vector<int> received;
     pv.AddMonitorCBAs<int>([&received](int v) { received.push_back(v); });
 
+    std::vector<bchtree::epics::PVReadResult<int>> received_meta;
+    pv.AddMonitorCBWithMetaAs<int>(
+        [&received_meta](bchtree::epics::PVReadResult<int>(v)) {
+            received_meta.push_back(v);
+        });
+
     pv.Put(10);
     pv.Put(-3);
 
     EXPECT_EQ(received.size(), 2);
     EXPECT_EQ(received.back(), -3);
+
+    EXPECT_EQ(received_meta.size(), 2);
+    bchtree::epics::PVReadResult<int> meta_last = received_meta.back();
+    EXPECT_EQ(meta_last.value, -3);
+    EXPECT_EQ(meta_last.meta.severity, 0);
+    EXPECT_EQ(meta_last.meta.status, 0);
 }
 
 TEST_F(SoftIocFixture, Monitor_STRO_AsString) {
@@ -261,11 +285,23 @@ TEST_F(SoftIocFixture, Monitor_STRO_AsString) {
     pv.AddMonitorCBAs<std::string>(
         [&received](std::string v) { received.push_back(v); });
 
+    std::vector<bchtree::epics::PVReadResult<std::string>> received_meta;
+    pv.AddMonitorCBWithMetaAs<std::string>(
+        [&received_meta](bchtree::epics::PVReadResult<std::string>(v)) {
+            received_meta.push_back(v);
+        });
+
     pv.Put("hello");
     pv.Put("world");
 
     EXPECT_EQ(received.size(), 2);
     EXPECT_EQ(received.back(), "world");
+
+    EXPECT_EQ(received_meta.size(), 2);
+    bchtree::epics::PVReadResult<std::string> meta_last = received_meta.back();
+    EXPECT_EQ(meta_last.value, "world");
+    EXPECT_EQ(meta_last.meta.severity, 0);
+    EXPECT_EQ(meta_last.meta.status, 0);
 }
 
 TEST_F(SoftIocFixture, Monitor_AO_AsString) {
@@ -278,11 +314,23 @@ TEST_F(SoftIocFixture, Monitor_AO_AsString) {
     pv.AddMonitorCBAs<std::string>(
         [&received](std::string v) { received.push_back(v); });
 
+    std::vector<bchtree::epics::PVReadResult<std::string>> received_meta;
+    pv.AddMonitorCBWithMetaAs<std::string>(
+        [&received_meta](bchtree::epics::PVReadResult<std::string>(v)) {
+            received_meta.push_back(v);
+        });
+
     pv.Put(1);
     pv.Put(2);
 
     EXPECT_EQ(received.size(), 2);
     EXPECT_EQ(received.back(), "2.000000");
+
+    EXPECT_EQ(received_meta.size(), 2);
+    bchtree::epics::PVReadResult<std::string> meta_last = received_meta.back();
+    EXPECT_EQ(meta_last.value, "2.000000");
+    EXPECT_EQ(meta_last.meta.severity, 0);
+    EXPECT_EQ(meta_last.meta.status, 0);
 }
 
 TEST_F(SoftIocFixture, Monitor_AO_MultipleCallbacks_Fire) {
