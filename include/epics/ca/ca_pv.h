@@ -45,6 +45,7 @@ class CAPV {
 
     template <typename T>
     T GetAs() {
+        std::lock_guard<std::mutex> lk(mtx_);
         if constexpr (std::is_same_v<T, PVData>) {
             // Don't need convert
             return pvdata_;
@@ -56,6 +57,7 @@ class CAPV {
 
     template <typename T>
     PVReadResult<T> GetWithMetaAs() {
+        std::lock_guard<std::mutex> lk(mtx_);
         PVReadResult<T> result;
         result.value = extract_as<T>(pvdata_);
         result.meta = pvdata_.meta;
